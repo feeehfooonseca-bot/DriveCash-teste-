@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050807">
+<title>DriveCash — Resgate local (somente leitura)</title>
+<style>
+:root{color-scheme:dark;--bg:#050807;--card:#0c1210;--line:#1b2a24;--green:#03ca8a;--text:#f4f7f5;--muted:#9aa8a2;--warn:#ffb44a;--bad:#ff6b6b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.wrap{max-width:720px;margin:auto;padding:20px}.brand{font-weight:800;font-size:24px}.brand b{color:var(--green)}.badge{display:inline-block;margin-top:8px;padding:5px 9px;border:1px solid rgba(3,202,138,.35);border-radius:999px;color:var(--green);font-size:12px}.notice{margin:18px 0;padding:14px;border:1px solid rgba(255,180,74,.35);background:rgba(255,180,74,.07);border-radius:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}.row{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}.row span{color:var(--muted)}select,button{width:100%;border-radius:12px;border:1px solid var(--line);padding:12px 14px;background:#101914;color:var(--text);font-weight:700;margin-top:10px}button.primary{background:var(--green);color:#022d20;border-color:var(--green)}button.secondary{background:#101914}.small{font-size:12px;color:var(--muted)}.ok{color:var(--green)}.warn{color:var(--warn)}.bad{color:var(--bad)}pre{white-space:pre-wrap;word-break:break-word;background:#08100c;padding:10px;border-radius:10px;color:#b8c5bf;max-height:220px;overflow:auto}.hidden{display:none}</style>
+</head>
+<body><main class="wrap">
+<div class="brand">Drive<b>Cash</b></div><div class="badge">RESGATE LOCAL · SOMENTE LEITURA</div>
+<div class="notice"><strong>Esta página não conecta ao Firebase e não sincroniza nada.</strong><div class="small">Ela apenas lê o armazenamento local deste navegador e permite baixar cópias de segurança. Não há botão de excluir, restaurar ou gravar dados.</div></div>
+<div class="card"><strong>Conta/escopo encontrado</strong><select id="scope"></select><div id="scopeInfo" class="small" style="margin-top:8px"></div></div>
+<div class="card"><strong>Dados locais encontrados</strong><div id="stats"></div></div>
+<div class="card"><strong>Snapshots locais</strong><div id="snapStats" class="small"></div><button id="downloadSnapshot" class="secondary">Baixar snapshot mais recente</button></div>
+<div class="card"><strong>Salvar cópias agora</strong><button id="downloadBackup" class="primary">Baixar backup DriveCash da conta</button><button id="downloadRaw" class="secondary">Baixar cópia bruta do localStorage</button><p class="small">Guarde os dois arquivos. A cópia bruta preserva as chaves exatamente como estão no navegador.</p></div>
+<div class="card"><strong>Diagnóstico</strong><pre id="diag"></pre></div>
+</main>
+<script>
+(function(){
+'use strict';
+var ENTITY={companies:'dc_empresas',rides:'dc_rotas',expenses:'dc_despesas',payments:'dc_pagamentos',fuelings:'dc_abastecimentos',maintenances:'dc_manutencoes'};
+var EXTRA={kmDays:'dc_km_dias',config:'dc_cfg',snapshots:'dc_snapshots_v17',syncPending:'dc_sync_pending_v18',migration:'dc_historical_migration_v184'};
+function parse(raw,fallback){try{return raw==null?fallback:JSON.parse(raw)}catch(e){return fallback}}
+function prefix(scope){return scope?'dc_user_'+scope+'__':''}
+function get(scope,key,fallback){return parse(localStorage.getItem(prefix(scope)+key),fallback)}
+function arr(v){return Array.isArray(v)?v:[]}
+function obj(v){return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function scopes(){
+ var out=new Set();
+ for(var i=0;i<localStorage.length;i++){
+  var k=localStorage.key(i)||''; var m=k.match(/^dc_user_(.+?)__(?:dc_rotas|dc_empresas|dc_snapshots_v17|dc_sync_pending_v18)/); if(m)out.add(m[1]);
+ }
+ if(localStorage.getItem('dc_rotas')||localStorage.getItem('dc_empresas')||localStorage.getItem('dc_snapshots_v17'))out.add('');
+ return Array.from(out);
+}
+function payload(scope){
+ var data={}; Object.keys(ENTITY).forEach(function(n){data[n]=arr(get(scope,ENTITY[n],[]))}); data.kmDays=obj(get(scope,EXTRA.kmDays,{}));data.config=obj(get(scope,EXTRA.config,{}));
+ return {schema:'drivecash-backup',schemaVersion:2,appVersion:'recovery-readonly',exportedAt:new Date().toISOString(),counts:{companies:data.companies.length,rides:data.rides.length,expenses:data.expenses.length,payments:data.payments.length,fuelings:data.fuelings.length,maintenances:data.maintenances.length},data:data,recovery:{scope:scope||'legacy-global',source:'localStorage',readonly:true}};
+}
+function dl(name,value){var blob=new Blob([JSON.stringify(value,null,2)],{type:'application/json;charset=utf-8'});var u=URL.createObjectURL(blob);var a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(function(){URL.revokeObjectURL(u)},500)}
+function rawDump(){var o={exportedAt:new Date().toISOString(),origin:location.origin,href:location.href,localStorage:{}};for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf('dc')===0)o.localStorage[k]=localStorage.getItem(k)}return o}
+function selected(){return document.getElementById('scope').value}
+function render(){
+ var scope=selected(),p=payload(scope),stats=document.getElementById('stats');
+ stats.innerHTML=Object.keys(p.counts).map(function(k){var labels={rides:'Corridas',companies:'Empresas',expenses:'Despesas',payments:'Pagamentos',fuelings:'Abastecimentos',maintenances:'Manutenções'};return '<div class="row"><span>'+labels[k]+'</span><strong>'+p.counts[k]+'</strong></div>'}).join('');
+ var snaps=arr(get(scope,EXTRA.snapshots,[])); var latest=snaps[0]; document.getElementById('snapStats').innerHTML=snaps.length?('<span class="ok">'+snaps.length+' snapshot(s) encontrado(s)</span><br>Mais recente: '+esc(latest.ts||'sem data')+' · '+esc(latest.summary||((latest.nRides||0)+' corridas'))):'<span class="warn">Nenhum snapshot encontrado neste escopo.</span>';
+ document.getElementById('downloadSnapshot').disabled=!latest;
+ var pending=obj(get(scope,EXTRA.syncPending,{})), migration=obj(get(scope,EXTRA.migration,{}));
+ var pendingCount=Object.keys(pending).length;
+ document.getElementById('scopeInfo').textContent=scope?'Escopo local detectado: '+scope:'Dados legados globais (sem escopo)';
+ document.getElementById('diag').textContent=JSON.stringify({origin:location.origin,scope:scope||'legacy-global',counts:p.counts,snapshots:snaps.length,pendingKeys:pendingCount,migration:migration},null,2);
+}
+var ss=scopes(),sel=document.getElementById('scope'); if(!ss.length){ss=[''];}
+ss.forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s?'Conta '+s:'Dados legados globais';sel.appendChild(o)});sel.addEventListener('change',render);
+document.getElementById('downloadBackup').onclick=function(){var s=selected(),p=payload(s),d=new Date().toISOString().slice(0,10);dl('drivecash_RESgate_'+d+'.json',p)};
+document.getElementById('downloadRaw').onclick=function(){var d=new Date().toISOString().slice(0,10);dl('drivecash_localStorage_BRUTO_'+d+'.json',rawDump())};
+document.getElementById('downloadSnapshot').onclick=function(){var s=selected(),sn=arr(get(s,EXTRA.snapshots,[]))[0];if(sn)dl('drivecash_snapshot_RESgate_'+new Date().toISOString().slice(0,10)+'.json',sn)};
+render();
+})();
+</script></body></html>
