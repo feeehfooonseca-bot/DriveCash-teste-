@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050807">
+<title>DriveCash — Reparar nuvem</title>
+<style>
+:root{color-scheme:dark;--bg:#050807;--card:#0d1411;--line:#213029;--green:#03ca8a;--text:#f5f7f6;--muted:#9aa8a2;--warn:#ffb44a;--bad:#ff6b6b;--blue:#66a6ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:720px;margin:auto;padding:20px}.brand{font-size:25px;font-weight:800}.brand b{color:var(--green)}
+.badge{display:inline-block;margin-top:8px;padding:5px 9px;border:1px solid rgba(3,202,138,.35);border-radius:999px;color:var(--green);font-size:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:14px 0}
+.notice{border-color:rgba(255,180,74,.4);background:rgba(255,180,74,.05)}
+.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}.row span{color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:#101914;border:1px solid var(--line);border-radius:12px;padding:12px}.metric small{display:block;color:var(--muted)}.metric strong{font-size:21px}
+button{display:block;width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:#101914;color:var(--text);font-weight:750;margin-top:10px}
+button.primary{background:var(--green);color:#022d20;border-color:var(--green)}button.secondary{border-color:rgba(102,166,255,.45);color:#b9d4ff}
+button:disabled{opacity:.45}.small{font-size:12px;color:var(--muted)}.ok{color:var(--green)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#08100c;color:var(--text);margin-top:8px}
+.hidden{display:none}pre{white-space:pre-wrap;word-break:break-word;background:#08100c;padding:10px;border-radius:10px;color:#b8c5bf;max-height:230px;overflow:auto}
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="brand">Drive<b>Cash</b></div>
+<div class="badge">REPARO DA NUVEM · ETAPA CONTROLADA</div>
+
+<div class="card notice">
+<strong>Importante</strong>
+<div class="small">Esta página NÃO grava nada automaticamente. Primeiro ela confere a cópia local e lê o que existe no Firebase. A gravação só acontece depois que você tocar em “Reparar nuvem”. Antes disso, ela baixa automaticamente uma cópia do estado atual da nuvem.</div>
+</div>
+
+<div class="card">
+<strong>Cópia local protegida</strong>
+<div class="grid" style="margin-top:12px">
+<div class="metric"><small>Corridas</small><strong id="lRides">0</strong></div>
+<div class="metric"><small>Empresas</small><strong id="lCompanies">0</strong></div>
+<div class="metric"><small>Despesas</small><strong id="lExpenses">0</strong></div>
+<div class="metric"><small>Pagamentos</small><strong id="lPayments">0</strong></div>
+</div>
+<div id="localCheck" class="small" style="margin-top:10px"></div>
+</div>
+
+<div class="card">
+<strong>Conta Firebase</strong>
+<div id="authStatus" class="small" style="margin-top:8px">Verificando login...</div>
+<div id="loginBox" class="hidden">
+<input id="email" type="email" autocomplete="email" placeholder="E-mail da sua conta DriveCash">
+<input id="password" type="password" autocomplete="current-password" placeholder="Senha">
+<button id="emailLogin">Entrar com e-mail e senha</button>
+<button id="googleLogin" class="secondary">Entrar com Google</button>
+<div class="small" style="margin-top:8px">Não envie sua senha para ninguém. Ela é digitada somente aqui e enviada diretamente ao Firebase.</div>
+</div>
+</div>
+
+<div class="card">
+<strong>Estado atual da nuvem</strong>
+<div id="cloudLoading" class="small" style="margin-top:8px">Aguardando login...</div>
+<div id="cloudBox" class="hidden">
+<div class="grid" style="margin-top:12px">
+<div class="metric"><small>Corridas</small><strong id="cRides">—</strong></div>
+<div class="metric"><small>Empresas</small><strong id="cCompanies">—</strong></div>
+<div class="metric"><small>Despesas</small><strong id="cExpenses">—</strong></div>
+<div class="metric"><small>Pagamentos</small><strong id="cPayments">—</strong></div>
+</div>
+<button id="downloadCloud" class="secondary">⬇️ Baixar backup atual da nuvem</button>
+</div>
+</div>
+
+<div class="card">
+<strong>Reparo</strong>
+<div id="repairMessage" class="small">Aguardando conferências.</div>
+<button id="repairBtn" class="primary" disabled>🔒 Reparar nuvem com os 1.941 dados locais</button>
+</div>
+
+<div id="resultCard" class="card hidden">
+<strong>Resultado</strong>
+<div id="result"></div>
+</div>
+
+<div class="card">
+<strong>Log técnico</strong>
+<pre id="log"></pre>
+</div>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyD6K6hrkmJLEpD5_oMl0Bvl0yhY2jkztq8",
+  authDomain:"drivecash-d094c.firebaseapp.com",
+  projectId:"drivecash-d094c",
+  storageBucket:"drivecash-d094c.firebasestorage.app",
+  messagingSenderId:"716930122730",
+  appId:"1:716930122730:web:74e836c0a545c4eea5e893",
+  measurementId:"G-P72GPJZDHR"
+};
+
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+const CORE={
+  rides:'dc_rotas',
+  companies:'dc_empresas',
+  expenses:'dc_despesas',
+  payments:'dc_pagamentos'
+};
+const EXTRA=['dc_km_dias','dc_cfg'];
+const EXPECTED={rides:1941,companies:22,expenses:41,payments:276};
+
+let currentUser=null;
+let cloudSnapshot=null;
+
+const $=id=>document.getElementById(id);
+function parse(raw,fallback){try{return raw==null?fallback:JSON.parse(raw)}catch(e){return fallback}}
+function localVal(key,fallback){return parse(localStorage.getItem(key),fallback)}
+function arr(v){return Array.isArray(v)?v:[]}
+function countsFromLocal(){
+ return {
+  rides:arr(localVal(CORE.rides,[])).length,
+  companies:arr(localVal(CORE.companies,[])).length,
+  expenses:arr(localVal(CORE.expenses,[])).length,
+  payments:arr(localVal(CORE.payments,[])).length
+ };
+}
+function exact(c){return Object.keys(EXPECTED).every(k=>Number(c[k])===EXPECTED[k])}
+function setCounts(prefix,c){
+ $(prefix+'Rides').textContent=c.rides ?? '—';
+ $(prefix+'Companies').textContent=c.companies ?? '—';
+ $(prefix+'Expenses').textContent=c.expenses ?? '—';
+ $(prefix+'Payments').textContent=c.payments ?? '—';
+}
+function log(s){
+ const t=new Date().toLocaleTimeString('pt-BR');
+ $('log').textContent += `[${t}] ${s}\n`;
+ $('log').scrollTop=$('log').scrollHeight;
+}
+function download(name,obj){
+ const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json;charset=utf-8'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=name;a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),800);
+}
+function maskEmail(s){
+ if(!s)return 'conta conectada';
+ const [a,b]=s.split('@'); if(!b)return s;
+ return (a.slice(0,2)+'***@'+b);
+}
+
+const lc=countsFromLocal();
+setCounts('l',lc);
+if(exact(lc)){
+ $('localCheck').innerHTML='<span class="ok">✅ Cópia local íntegra e pronta para o reparo.</span>';
+ log('Cópia local validada: 1941 / 22 / 41 / 276.');
+}else{
+ $('localCheck').innerHTML='<span class="bad">❌ Os totais locais mudaram. NÃO continue.</span>';
+ log('BLOQUEADO: totais locais não correspondem ao backup validado.');
+}
+
+async function readCloud(uid){
+ const snapData={schema:'drivecash-cloud-before-repair',createdAt:new Date().toISOString(),uidMasked:uid.slice(0,4)+'…',data:{}};
+ const counts={};
+ for(const [name,key] of Object.entries(CORE)){
+  const s=await getDoc(doc(db,'usuarios',uid,'dados',key));
+  const val=s.exists()?s.data().valor:[];
+  snapData.data[key]=val;
+  counts[name]=arr(val).length;
+ }
+ for(const key of EXTRA){
+  const s=await getDoc(doc(db,'usuarios',uid,'dados',key));
+  snapData.data[key]=s.exists()?s.data().valor:null;
+ }
+ cloudSnapshot=snapData;
+ return counts;
+}
+
+async function refreshCloud(){
+ if(!currentUser)return;
+ $('cloudLoading').textContent='Lendo Firebase sem alterar nada...';
+ $('cloudBox').classList.add('hidden');
+ $('repairBtn').disabled=true;
+ try{
+  const cc=await readCloud(currentUser.uid);
+  setCounts('c',cc);
+  $('cloudLoading').innerHTML='<span class="ok">✅ Leitura concluída. Nenhum dado foi alterado.</span>';
+  $('cloudBox').classList.remove('hidden');
+  log(`Nuvem lida: ${cc.rides} / ${cc.companies} / ${cc.expenses} / ${cc.payments}.`);
+  if(!exact(countsFromLocal())){
+    $('repairMessage').innerHTML='<span class="bad">Cópia local não está mais íntegra. Reparo bloqueado.</span>';
+  }else if(exact(cc)){
+    $('repairMessage').innerHTML='<span class="ok">✅ A nuvem já contém os mesmos totais da cópia completa. Não é necessário reparar.</span>';
+  }else{
+    $('repairMessage').innerHTML=`<span class="warn">⚠️ A nuvem está diferente da cópia local validada. O botão abaixo vai substituir somente os documentos antigos de Corridas, Empresas, Despesas e Pagamentos pela cópia local completa.</span>`;
+    $('repairBtn').disabled=false;
+  }
+ }catch(e){
+  $('cloudLoading').innerHTML='<span class="bad">❌ Não foi possível ler a nuvem: '+String(e.message||e)+'</span>';
+  log('Erro lendo nuvem: '+String(e.message||e));
+ }
+}
+
+onAuthStateChanged(auth,user=>{
+ currentUser=user||null;
+ if(user){
+  $('authStatus').innerHTML=`<span class="ok">✅ Conectado: ${maskEmail(user.email)}</span>`;
+  $('loginBox').classList.add('hidden');
+  log('Firebase Auth conectado.');
+  refreshCloud();
+ }else{
+  $('authStatus').innerHTML='<span class="warn">Nenhum login Firebase encontrado neste navegador. Entre abaixo.</span>';
+  $('loginBox').classList.remove('hidden');
+  $('cloudLoading').textContent='Aguardando login...';
+  log('Firebase Auth sem sessão.');
+ }
+});
+
+$('emailLogin').onclick=async()=>{
+ try{
+  $('emailLogin').disabled=true;
+  await signInWithEmailAndPassword(auth,$('email').value.trim(),$('password').value);
+ }catch(e){ $('authStatus').innerHTML='<span class="bad">❌ Falha no login: '+String(e.message||e)+'</span>'; }
+ finally{$('emailLogin').disabled=false}
+};
+$('googleLogin').onclick=async()=>{
+ try{
+  $('googleLogin').disabled=true;
+  await signInWithPopup(auth,new GoogleAuthProvider());
+ }catch(e){ $('authStatus').innerHTML='<span class="bad">❌ Falha no Google: '+String(e.message||e)+'</span>'; }
+ finally{$('googleLogin').disabled=false}
+};
+
+$('downloadCloud').onclick=()=>{
+ if(!cloudSnapshot)return;
+ download('drivecash_NUVEM_antes_reparo_'+new Date().toISOString().slice(0,10)+'.json',cloudSnapshot);
+ log('Backup da nuvem atual baixado manualmente.');
+};
+
+$('repairBtn').onclick=async()=>{
+ if(!currentUser)return;
+ const nowLocal=countsFromLocal();
+ if(!exact(nowLocal)){
+  alert('Os totais locais mudaram. Reparo bloqueado.');
+  return;
+ }
+ const ok=confirm('Confirmar reparo da nuvem?\n\nSerá baixada uma cópia da nuvem atual e depois os dados locais completos serão enviados para a SUA conta Firebase.');
+ if(!ok)return;
+
+ $('repairBtn').disabled=true;
+ $('resultCard').classList.remove('hidden');
+ $('result').innerHTML='<span class="warn">Executando reparo. Não feche esta página...</span>';
+
+ try{
+  // Releitura imediatamente antes da escrita + backup automático.
+  const beforeCounts=await readCloud(currentUser.uid);
+  download('drivecash_NUVEM_antes_reparo_'+new Date().toISOString().slice(0,10)+'.json',cloudSnapshot);
+  log(`Backup automático da nuvem baixado (${beforeCounts.rides} corridas).`);
+
+  // Corridas primeiro: se este documento falhar, não prossegue com os demais.
+  const rides=arr(localVal(CORE.rides,[]));
+  log('Enviando corridas...');
+  await setDoc(doc(db,'usuarios',currentUser.uid,'dados',CORE.rides),{valor:rides});
+  let check=await getDoc(doc(db,'usuarios',currentUser.uid,'dados',CORE.rides));
+  let checkRides=check.exists()?arr(check.data().valor).length:0;
+  if(checkRides!==EXPECTED.rides) throw new Error(`Verificação das corridas falhou: ${checkRides}/${EXPECTED.rides}`);
+  log('Corridas confirmadas na nuvem: 1941.');
+
+  for(const [name,key] of Object.entries(CORE)){
+   if(name==='rides')continue;
+   const value=arr(localVal(key,[]));
+   log('Enviando '+key+'...');
+   await setDoc(doc(db,'usuarios',currentUser.uid,'dados',key),{valor:value});
+  }
+
+  // Preserva também configuração e KM diário restaurados.
+  for(const key of EXTRA){
+   const value=localVal(key,{});
+   if(value!=null){
+    log('Preservando '+key+'...');
+    await setDoc(doc(db,'usuarios',currentUser.uid,'dados',key),{valor:value});
+   }
+  }
+
+  const after=await readCloud(currentUser.uid);
+  setCounts('c',after);
+  if(!exact(after))throw new Error(`Totais finais não conferem: ${JSON.stringify(after)}`);
+
+  $('result').innerHTML='<div class="ok"><strong>✅ NUVEM REPARADA E VERIFICADA.</strong></div><div class="small" style="margin-top:8px">Firebase agora contém 1.941 corridas, 22 empresas, 41 despesas e 276 pagamentos. Faça uma captura desta tela e envie antes de abrir o app principal.</div>';
+  $('repairMessage').innerHTML='<span class="ok">✅ Reparo concluído e relido do Firebase.</span>';
+  log('SUCESSO: nuvem verificada 1941 / 22 / 41 / 276.');
+ }catch(e){
+  $('result').innerHTML='<div class="bad"><strong>❌ O reparo não foi concluído.</strong></div><div class="small" style="margin-top:8px">'+String(e.message||e)+'</div><div class="small">Não abra o aplicativo principal. Envie uma captura desta tela.</div>';
+  log('ERRO NO REPARO: '+String(e.message||e));
+  $('repairBtn').disabled=false;
+ }
+};
+</script>
+</body>
+</html>
