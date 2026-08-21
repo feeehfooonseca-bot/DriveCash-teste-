@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050807">
+<title>DriveCash — Conferência segura</title>
+<style>
+:root{color-scheme:dark;--bg:#050807;--card:#0c1210;--card2:#101914;--line:#1d2b25;--green:#03ca8a;--text:#f5f7f6;--muted:#9aa8a2;--warn:#ffb44a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:760px;margin:auto;padding:18px}.brand{font-size:25px;font-weight:800}.brand b{color:var(--green)}
+.badge{display:inline-block;margin-top:8px;padding:5px 9px;border:1px solid rgba(3,202,138,.35);border-radius:999px;color:var(--green);font-size:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:14px 0}
+.notice{border-color:rgba(3,202,138,.35);background:rgba(3,202,138,.05)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:13px}
+.metric small{display:block;color:var(--muted);font-size:12px}.metric strong{font-size:22px}
+.tabs{display:flex;gap:8px;margin:14px 0}.tabs button{flex:1;background:var(--card2);border:1px solid var(--line);color:var(--text);padding:11px;border-radius:11px;font-weight:700}.tabs button.active{border-color:var(--green);color:var(--green)}
+.row{padding:10px 0;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}.muted{color:var(--muted)}.green{color:var(--green)}.warn{color:var(--warn)}
+.search{width:100%;padding:12px;border-radius:11px;border:1px solid var(--line);background:var(--card2);color:var(--text);margin:8px 0 12px}
+.pill{display:inline-block;padding:3px 7px;border-radius:999px;background:var(--card2);border:1px solid var(--line);font-size:11px;color:var(--muted)}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="brand">Drive<b>Cash</b></div>
+<div class="badge">CONFERÊNCIA SEGURA · FIREBASE BLOQUEADO</div>
+
+<div class="card notice">
+<strong>Modo somente leitura</strong>
+<div class="muted">Esta página não carrega Firebase, não faz login e não envia nada. Ela apenas lê o armazenamento local que acabamos de restaurar neste navegador.</div>
+</div>
+
+<div class="card">
+<div class="grid">
+<div class="metric"><small>Corridas</small><strong id="mRides">0</strong></div>
+<div class="metric"><small>Empresas</small><strong id="mCompanies">0</strong></div>
+<div class="metric"><small>Despesas</small><strong id="mExpenses">0</strong></div>
+<div class="metric"><small>Pagamentos</small><strong id="mPayments">0</strong></div>
+</div>
+</div>
+
+<div class="tabs">
+<button id="tabResumo" class="active" onclick="showTab('resumo')">Resumo</button>
+<button id="tabHistorico" onclick="showTab('historico')">Histórico</button>
+<button id="tabEmpresas" onclick="showTab('empresas')">Empresas</button>
+</div>
+
+<section id="resumo">
+<div class="card">
+<strong>Resumo por mês</strong>
+<div id="months"></div>
+</div>
+<div class="card">
+<strong>Últimas corridas</strong>
+<div id="latest"></div>
+</div>
+</section>
+
+<section id="historico" class="hidden">
+<div class="card">
+<strong>Histórico local</strong>
+<input id="search" class="search" placeholder="Buscar por empresa, bairro, destinatário ou data">
+<div id="historyList"></div>
+</div>
+</section>
+
+<section id="empresas" class="hidden">
+<div class="card">
+<strong>Empresas locais</strong>
+<div id="companyList"></div>
+</div>
+</section>
+
+<div class="card">
+<strong>Validação</strong>
+<div id="validation"></div>
+</div>
+</main>
+
+<script>
+(function(){
+'use strict';
+const parse=(s,f)=>{try{return s==null?f:JSON.parse(s)}catch(e){return f}};
+const rides=Array.isArray(parse(localStorage.getItem('dc_rotas'),[]))?parse(localStorage.getItem('dc_rotas'),[]):[];
+const companies=Array.isArray(parse(localStorage.getItem('dc_empresas'),[]))?parse(localStorage.getItem('dc_empresas'),[]):[];
+const expenses=Array.isArray(parse(localStorage.getItem('dc_despesas'),[]))?parse(localStorage.getItem('dc_despesas'),[]):[];
+const payments=Array.isArray(parse(localStorage.getItem('dc_pagamentos'),[]))?parse(localStorage.getItem('dc_pagamentos'),[]):[];
+
+document.getElementById('mRides').textContent=rides.length;
+document.getElementById('mCompanies').textContent=companies.length;
+document.getElementById('mExpenses').textContent=expenses.length;
+document.getElementById('mPayments').textContent=payments.length;
+
+function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+function safe(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function getBairros(r){
+ const a=Array.isArray(r.entregas)?r.entregas:[];
+ return a.map(x=>x&&x.bairro).filter(Boolean).join(', ');
+}
+function getDest(r){
+ const a=Array.isArray(r.entregas)?r.entregas:[];
+ return a.map(x=>x&&x.destinatario).filter(Boolean).join(', ');
+}
+function dateKey(r){return String(r.data||'').slice(0,10)}
+function sortDesc(a,b){return dateKey(b).localeCompare(dateKey(a)) || Number(b.id||0)-Number(a.id||0)}
+const sorted=[...rides].sort(sortDesc);
+
+const monthMap={};
+for(const r of rides){
+ const m=(r.mes||String(r.data||'').slice(0,7)||'sem-mes');
+ if(!monthMap[m]) monthMap[m]={n:0,total:0};
+ monthMap[m].n++; monthMap[m].total+=Number(r.total||0);
+}
+document.getElementById('months').innerHTML=Object.entries(monthMap).sort((a,b)=>b[0].localeCompare(a[0])).map(([m,v])=>
+ `<div class="row"><strong>${safe(m)}</strong><div class="muted">${v.n} corridas · ${money(v.total)}</div></div>`
+).join('');
+
+document.getElementById('latest').innerHTML=sorted.slice(0,12).map(r=>
+ `<div class="row"><strong>${safe(r.data||'Sem data')} · ${safe(r.empNome||'Sem empresa')}</strong>
+ <div>${money(r.total)}</div><div class="muted">${safe(getBairros(r)||getDest(r)||r.tipo||'')}</div></div>`
+).join('');
+
+function renderHistory(q=''){
+ const term=q.trim().toLowerCase();
+ const filtered=!term?sorted:sorted.filter(r=>{
+  const text=[r.data,r.empNome,r.tipo,getBairros(r),getDest(r),r.obs,r.id].join(' ').toLowerCase();
+  return text.includes(term);
+ });
+ document.getElementById('historyList').innerHTML=
+  `<div class="muted" style="margin-bottom:8px">${filtered.length} resultado(s)</div>`+
+  filtered.slice(0,300).map(r=>
+   `<div class="row"><div><strong>${safe(r.data||'Sem data')} · ${safe(r.empNome||'Sem empresa')}</strong> <span class="pill">${safe(r.tipo||'')}</span></div>
+   <div>${money(r.total)}</div><div class="muted">${safe(getBairros(r)||getDest(r)||r.obs||'')}</div></div>`
+  ).join('')+
+  (filtered.length>300?`<div class="row warn">Mostrando 300 de ${filtered.length}. Use a busca para filtrar.</div>`:'');
+}
+renderHistory();
+document.getElementById('search').addEventListener('input',e=>renderHistory(e.target.value));
+
+document.getElementById('companyList').innerHTML=companies.map(c=>
+ `<div class="row"><strong>${safe(c.nome||'Sem nome')}</strong><div class="muted">ID ${safe(c.id||'')} ${c.tel?'· '+safe(c.tel):''}</div></div>`
+).join('');
+
+const ids=new Set(),dups=[];
+for(const r of rides){const id=String(r.id??''); if(ids.has(id))dups.push(id); else ids.add(id)}
+const valid=rides.length===1941 && companies.length===22 && expenses.length===41 && payments.length===276 && dups.length===0;
+document.getElementById('validation').innerHTML=valid
+ ? `<div class="green"><strong>✅ Dados restaurados íntegros.</strong></div><div class="muted">1.941 corridas e nenhuma ID duplicada nesta cópia local.</div>`
+ : `<div class="warn"><strong>⚠️ Conferir antes de continuar.</strong></div><div class="muted">Corridas: ${rides.length}; empresas: ${companies.length}; despesas: ${expenses.length}; pagamentos: ${payments.length}; IDs duplicadas: ${dups.length}.</div>`;
+
+window.showTab=function(name){
+ for(const n of ['resumo','historico','empresas']) document.getElementById(n).classList.toggle('hidden',n!==name);
+ for(const n of ['Resumo','Historico','Empresas']) document.getElementById('tab'+n).classList.toggle('active',n.toLowerCase()===name);
+};
+})();
+</script>
+</body>
+</html>
