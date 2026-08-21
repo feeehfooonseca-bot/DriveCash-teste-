@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050807">
+<title>DriveCash — Restaurar histórico local</title>
+<style>
+:root{color-scheme:dark;--bg:#050807;--card:#0d1411;--line:#213029;--green:#03ca8a;--text:#f5f7f6;--muted:#9aa8a2;--warn:#ffb44a;--bad:#ff6b6b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.wrap{max-width:720px;margin:auto;padding:20px}
+.brand{font-size:25px;font-weight:800}.brand b{color:var(--green)}.badge{display:inline-block;margin-top:8px;padding:5px 9px;border:1px solid rgba(3,202,138,.35);border-radius:999px;color:var(--green);font-size:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:14px 0}.notice{border-color:rgba(255,180,74,.4);background:rgba(255,180,74,.06)}
+.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}.row span{color:var(--muted)}
+button,.filebtn{display:block;width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:#101914;color:var(--text);font-weight:750;text-align:center;margin-top:10px}
+button.primary{background:var(--green);color:#022d20;border-color:var(--green)}button.danger{background:#2b1212;border-color:#5f2424;color:#ffdede}button:disabled{opacity:.45}
+input[type=file]{display:none}.small{font-size:12px;color:var(--muted)}.ok{color:var(--green)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+pre{white-space:pre-wrap;word-break:break-word;background:#08100c;padding:10px;border-radius:10px;color:#b8c5bf;max-height:220px;overflow:auto}.hidden{display:none}
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="brand">Drive<b>Cash</b></div>
+<div class="badge">RESTAURAÇÃO LOCAL · SEM FIREBASE</div>
+
+<div class="card notice">
+<strong>Importante</strong>
+<div class="small">Esta página não conecta ao Firebase. Ela restaura apenas os dados locais antigos que o DriveCash principal usa. Antes de alterar qualquer coisa, ela cria uma cópia de emergência do estado atual.</div>
+</div>
+
+<div class="card">
+<strong>1. Selecione o backup resgatado</strong>
+<label class="filebtn" for="backupFile">📁 Escolher arquivo drivecash_RESgate_....json</label>
+<input id="backupFile" type="file" accept=".json,application/json">
+<div id="fileStatus" class="small" style="margin-top:10px">Nenhum arquivo selecionado.</div>
+</div>
+
+<div id="previewCard" class="card hidden">
+<strong>2. Conferência do backup</strong>
+<div id="preview"></div>
+<div id="validation" class="small" style="margin-top:10px"></div>
+</div>
+
+<div class="card">
+<strong>Estado antigo atual deste navegador</strong>
+<div id="current"></div>
+<div class="small">Esses são os dados que o aplicativo principal antigo enxerga atualmente.</div>
+</div>
+
+<div id="restoreCard" class="card hidden">
+<strong>3. Restaurar histórico completo</strong>
+<div class="small">Ao tocar abaixo, a página salva uma cópia de emergência e então grava Corridas, Empresas, Despesas, Pagamentos, KM diário e Configuração do backup nas chaves antigas.</div>
+<button id="restoreBtn" class="primary" disabled>🔒 Restaurar dados completos</button>
+</div>
+
+<div id="resultCard" class="card hidden">
+<strong>Resultado</strong>
+<div id="result"></div>
+<button id="downloadEmergency" class="hidden">⬇️ Baixar cópia de emergência anterior</button>
+</div>
+
+<div class="card">
+<strong>Diagnóstico</strong>
+<pre id="diag"></pre>
+</div>
+</main>
+
+<script>
+(function(){
+'use strict';
+const KEYS={companies:'dc_empresas',rides:'dc_rotas',expenses:'dc_despesas',payments:'dc_pagamentos',kmDays:'dc_km_dias',config:'dc_cfg'};
+let backup=null, emergency=null;
+
+function p(raw,fallback){try{return raw==null?fallback:JSON.parse(raw)}catch(e){return fallback}}
+function arr(v){return Array.isArray(v)?v:[]}
+function obj(v){return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}
+function countKey(k){return arr(p(localStorage.getItem(k),[])).length}
+function statsHtml(c){
+ const labels={rides:'Corridas',companies:'Empresas',expenses:'Despesas',payments:'Pagamentos'};
+ return ['rides','companies','expenses','payments'].map(k=>`<div class="row"><span>${labels[k]}</span><strong>${Number(c[k]||0)}</strong></div>`).join('');
+}
+function currentCounts(){
+ return {rides:countKey(KEYS.rides),companies:countKey(KEYS.companies),expenses:countKey(KEYS.expenses),payments:countKey(KEYS.payments)};
+}
+function renderCurrent(){
+ const c=currentCounts();
+ document.getElementById('current').innerHTML=statsHtml(c);
+ document.getElementById('diag').textContent=JSON.stringify({
+   origin:location.origin, href:location.href, currentLegacyCounts:c,
+   scopedRideKeys:Object.keys(localStorage).filter(k=>/^dc_user_.+__dc_rotas$/.test(k))
+ },null,2);
+}
+function validateBackup(b){
+ if(!b||typeof b!=='object') return 'Arquivo JSON inválido.';
+ if(b.schema!=='drivecash-backup') return 'Este arquivo não é um backup DriveCash reconhecido.';
+ if(!b.data||!Array.isArray(b.data.rides)) return 'O backup não contém a lista de corridas.';
+ const actual={
+   rides:arr(b.data.rides).length,
+   companies:arr(b.data.companies).length,
+   expenses:arr(b.data.expenses).length,
+   payments:arr(b.data.payments).length
+ };
+ if(b.counts){
+   for(const k of Object.keys(actual)){
+     if(Number(b.counts[k]||0)!==actual[k]) return `Contagem inconsistente em ${k}: cabeçalho ${b.counts[k]} x conteúdo ${actual[k]}.`;
+   }
+ }
+ if(actual.rides<1) return 'O backup não contém corridas.';
+ return null;
+}
+function download(name,data){
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),500);
+}
+
+document.getElementById('backupFile').addEventListener('change', async function(){
+ const f=this.files&&this.files[0]; if(!f)return;
+ try{
+   const text=await f.text(); const b=JSON.parse(text); const err=validateBackup(b);
+   if(err){ backup=null; document.getElementById('fileStatus').innerHTML=`<span class="bad">❌ ${err}</span>`; return; }
+   backup=b;
+   const c={rides:b.data.rides.length,companies:arr(b.data.companies).length,expenses:arr(b.data.expenses).length,payments:arr(b.data.payments).length};
+   document.getElementById('fileStatus').innerHTML=`<span class="ok">✅ Backup válido: ${f.name}</span>`;
+   document.getElementById('preview').innerHTML=statsHtml(c);
+   document.getElementById('validation').innerHTML=`<span class="ok">Conteúdo conferido. Nenhum dado será alterado até você tocar em Restaurar.</span>`;
+   document.getElementById('previewCard').classList.remove('hidden');
+   document.getElementById('restoreCard').classList.remove('hidden');
+   document.getElementById('restoreBtn').disabled=false;
+ }catch(e){
+   backup=null; document.getElementById('fileStatus').innerHTML=`<span class="bad">❌ Não foi possível ler o arquivo: ${String(e.message||e)}</span>`;
+ }
+});
+
+document.getElementById('restoreBtn').addEventListener('click', function(){
+ if(!backup)return;
+ const ok=confirm(`Restaurar ${backup.data.rides.length} corridas no armazenamento antigo do DriveCash?\n\nA página criará antes uma cópia de emergência do estado atual.`);
+ if(!ok)return;
+
+ const stamp=new Date().toISOString();
+ emergency={schema:'drivecash-emergency-before-restore',createdAt:stamp,origin:location.origin,raw:{}};
+ Object.values(KEYS).forEach(k=>{ emergency.raw[k]=localStorage.getItem(k); });
+ localStorage.setItem('dc_emergency_before_restore_'+Date.now(), JSON.stringify(emergency));
+
+ // Grava SOMENTE as chaves legadas usadas pelo app principal.
+ localStorage.setItem(KEYS.rides, JSON.stringify(arr(backup.data.rides)));
+ localStorage.setItem(KEYS.companies, JSON.stringify(arr(backup.data.companies)));
+ localStorage.setItem(KEYS.expenses, JSON.stringify(arr(backup.data.expenses)));
+ localStorage.setItem(KEYS.payments, JSON.stringify(arr(backup.data.payments)));
+ localStorage.setItem(KEYS.kmDays, JSON.stringify(obj(backup.data.kmDays)));
+ localStorage.setItem(KEYS.config, JSON.stringify(obj(backup.data.config)));
+
+ const after=currentCounts();
+ const expected={rides:backup.data.rides.length,companies:arr(backup.data.companies).length,expenses:arr(backup.data.expenses).length,payments:arr(backup.data.payments).length};
+ const success=Object.keys(expected).every(k=>after[k]===expected[k]);
+
+ document.getElementById('resultCard').classList.remove('hidden');
+ document.getElementById('result').innerHTML=success
+   ? `<div class="ok"><strong>✅ Restauração local concluída.</strong></div>${statsHtml(after)}<div class="small">Não abra ainda o aplicativo principal online. Primeiro envie uma captura desta tela para conferência.</div>`
+   : `<div class="bad"><strong>❌ A verificação não bateu.</strong></div>${statsHtml(after)}<div class="small">Não abra o aplicativo principal. Envie uma captura desta tela.</div>`;
+ const d=document.getElementById('downloadEmergency'); d.classList.remove('hidden');
+ renderCurrent();
+ window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+});
+
+document.getElementById('downloadEmergency').addEventListener('click',function(){
+ if(emergency) download('drivecash_EMERGENCIA_antes_restauracao_'+new Date().toISOString().slice(0,10)+'.json', emergency);
+});
+
+renderCurrent();
+})();
+</script>
+</body>
+</html>
