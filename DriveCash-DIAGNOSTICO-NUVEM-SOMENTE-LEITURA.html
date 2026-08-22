@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07110d">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self' data: blob:;
+               script-src 'self' 'unsafe-inline' https://www.gstatic.com;
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' data:;
+               connect-src https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com;
+               font-src 'self' data:;
+               frame-src 'none';
+               object-src 'none';
+               base-uri 'none';
+               form-action 'self';">
+<title>DriveCash — Diagnóstico Nuvem Somente Leitura</title>
+<style>
+:root{--bg:#0b0f14;--card:#111821;--card2:#17212d;--border:#253241;--text:#f4f7fb;--muted:#8491a3;--green:#25e28a;--red:#ff6363;--orange:#ffb020;--blue:#6da9ff}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+.ribbon{position:sticky;top:0;z-index:5;background:#155f4a;color:#fff;text-align:center;padding:10px 12px;font-weight:900;font-size:.72rem;letter-spacing:.07em}
+.wrap{max-width:720px;margin:auto;padding:16px 14px 40px}.card{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:15px;margin-bottom:12px}
+h1{font-size:1.25rem;margin:0 0 6px}h2{font-size:1rem;margin:0 0 6px}.small{font-size:.76rem;line-height:1.5}.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px}
+.metric span{display:block;color:var(--muted);font-size:.6rem;text-transform:uppercase;margin-bottom:4px}.metric strong{font-size:.9rem;word-break:break-word}
+button{border:0;border-radius:11px;padding:12px 14px;font-weight:900;width:100%;background:var(--green);color:#06110b;font-size:.92rem}
+button:disabled{opacity:.5}.row{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:9px}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:center}.name{font-weight:850}.status{font-size:.62rem;font-weight:900;padding:5px 7px;border-radius:999px;border:1px solid var(--border)}
+.ok{color:var(--green);border-color:rgba(37,226,138,.35)}.bad{color:var(--red);border-color:rgba(255,99,99,.35)}.warn{color:var(--orange);border-color:rgba(255,176,32,.35)}
+pre{white-space:pre-wrap;word-break:break-word;color:var(--muted);font-size:.67rem;margin:8px 0 0}
+#results{display:none}
+@media(max-width:520px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="ribbon">DIAGNÓSTICO · SOMENTE LEITURA · NENHUMA GRAVAÇÃO</div>
+<main class="wrap">
+  <section class="card">
+    <h1>DriveCash — Diagnóstico direto do Firestore</h1>
+    <p class="muted small">Esta página não lista a coleção inteira. Ela consulta diretamente cada documento pelo ID exato, para descobrir se o problema está no verificador anterior ou nos dados da nuvem.</p>
+  </section>
+
+  <section class="card">
+    <h2>Conta autenticada</h2>
+    <div class="grid">
+      <div class="metric"><span>E-mail</span><strong id="email">Verificando…</strong></div>
+      <div class="metric"><span>UID</span><strong id="uid">—</strong></div>
+    </div>
+    <p id="authMsg" class="muted small" style="margin-top:10px">Aguardando Firebase Auth.</p>
+  </section>
+
+  <section class="card">
+    <h2>Leitura direta</h2>
+    <p class="muted small" style="margin-bottom:12px">Toque uma vez. Nenhum dado será criado, editado ou apagado.</p>
+    <button id="run" disabled>LER DOCUMENTOS DIRETAMENTE</button>
+  </section>
+
+  <section id="results" class="card">
+    <h2>Resultado</h2>
+    <div id="rows"></div>
+  </section>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+const firebaseConfig={
+  apiKey:"AIzaSyD6K6hrkmJLEpD5_oMl0Bvl0yhY2jkztq8",
+  authDomain:"drivecash-d094c.firebaseapp.com",
+  projectId:"drivecash-d094c",
+  storageBucket:"drivecash-d094c.firebasestorage.app",
+  messagingSenderId:"716930122730",
+  appId:"1:716930122730:web:74e836c0a545c4eea5e893",
+  measurementId:"G-P72GPJZDHR"
+};
+
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+const KEYS=[
+  ['dc_rotas','Corridas'],
+  ['dc_empresas','Empresas'],
+  ['dc_despesas','Despesas'],
+  ['dc_pagamentos','Pagamentos'],
+  ['dc_custos','Custos'],
+  ['dc_abastecimentos','Abastecimentos'],
+  ['dc_manutencoes','Manutenções']
+];
+let user=null;
+const $=id=>document.getElementById(id);
+function count(v){
+  if(Array.isArray(v))return v.length;
+  if(v&&typeof v==='object')return Object.keys(v).length;
+  if(v===null||v===undefined||v==='')return 0;
+  return 1;
+}
+function hash(txt){
+  let h=2166136261>>>0;
+  for(let i=0;i<txt.length;i++){h^=txt.charCodeAt(i);h=Math.imul(h,16777619)>>>0}
+  return h.toString(16);
+}
+async function readExact(uid,key){
+  const snap=await getDoc(doc(db,'usuarios',uid,'dados',key));
+  if(!snap.exists()) return {exists:false,count:0,chunked:false,reason:'documento não existe'};
+  const data=snap.data()||{};
+  if(!data.chunked) return {exists:true,count:count(data.valor),chunked:false,type:Array.isArray(data.valor)?'array':typeof data.valor};
+  const n=Number(data.chunkCount||0);
+  if(!n||n<1||n>5000)return {exists:true,count:null,chunked:true,error:'manifesto inválido',manifest:data};
+  const parts=[];
+  for(let i=0;i<n;i++){
+    const id=key+'__part__'+String(i).padStart(5,'0');
+    const ps=await getDoc(doc(db,'usuarios',uid,'dados',id));
+    if(!ps.exists())return {exists:true,count:null,chunked:true,error:'parte ausente '+i};
+    const pd=ps.data()||{};
+    if(typeof pd.conteudo!=='string')return {exists:true,count:null,chunked:true,error:'parte inválida '+i};
+    parts.push(pd.conteudo);
+  }
+  const json=parts.join('');
+  if(data.hash&&hash(json)!==String(data.hash))return {exists:true,count:null,chunked:true,error:'checksum inválido'};
+  const value=JSON.parse(json);
+  return {exists:true,count:count(value),chunked:true,parts:n,bytes:data.byteLength||null};
+}
+onAuthStateChanged(auth,u=>{
+  user=u||null;
+  if(user){
+    $('email').textContent=user.email||'Conta autenticada';
+    $('uid').textContent=String(user.uid||'');
+    $('authMsg').textContent='Sessão encontrada. Pronto para leitura direta.';
+    $('run').disabled=false;
+  }else{
+    $('email').textContent='NÃO AUTENTICADO';
+    $('uid').textContent='—';
+    $('authMsg').textContent='Abra primeiro uma das páginas do DriveCash que já está autenticada e volte aqui.';
+    $('run').disabled=true;
+  }
+});
+$('run').addEventListener('click',async()=>{
+  if(!user)return;
+  $('run').disabled=true;
+  $('run').textContent='LENDO…';
+  $('results').style.display='block';
+  $('rows').innerHTML='';
+  for(const [key,label] of KEYS){
+    let r;
+    try{r=await readExact(user.uid,key)}
+    catch(e){r={exists:false,error:e?.code||e?.message||String(e)}}
+    const cls=r.error?'bad':(r.exists?'ok':'warn');
+    const tag=r.error?'ERRO':(r.exists?'ENCONTRADO':'AUSENTE');
+    const info=[
+      'ID: '+key,
+      'Existe: '+(r.exists?'sim':'não'),
+      'Quantidade: '+(r.count===null||r.count===undefined?'—':r.count),
+      'Formato: '+(r.chunked?'dividido em partes':'direto'),
+      r.parts?'Partes: '+r.parts:null,
+      r.error?'Erro: '+r.error:null,
+      r.reason?'Obs.: '+r.reason:null
+    ].filter(Boolean).join('\n');
+    const div=document.createElement('div');
+    div.className='row';
+    div.innerHTML='<div class="top"><div><div class="name">'+label+'</div><div class="muted small">'+key+'</div></div><span class="status '+cls+'">'+tag+'</span></div><pre></pre>';
+    div.querySelector('pre').textContent=info;
+    $('rows').appendChild(div);
+  }
+  $('run').textContent='LEITURA CONCLUÍDA';
+});
+</script>
+</body>
+</html>
