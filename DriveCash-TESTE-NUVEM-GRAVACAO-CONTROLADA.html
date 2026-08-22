@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#15100a">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self' data: blob:;
+               script-src 'self' 'unsafe-inline' https://www.gstatic.com;
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' data:;
+               connect-src https://*.googleapis.com https://*.firebaseio.com;
+               font-src 'self' data:;
+               frame-src 'none';
+               object-src 'none';
+               base-uri 'none';
+               form-action 'self';">
+<title>DriveCash — Teste Nuvem Gravação Controlada</title>
+<style>
+:root{
+  --bg:#0b0f14;--surface:#111821;--surface2:#17212d;--border:#253241;
+  --text:#f4f7fb;--muted:#8491a3;--green:#25e28a;--gold:#f2c94c;
+  --red:#ff6363;--orange:#ffb020;--blue:#6da9ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.ribbon{position:sticky;top:0;z-index:10;background:#8b5310;color:#fff;text-align:center;padding:9px 12px;font-size:.7rem;font-weight:900;letter-spacing:.07em}
+.shell{width:min(720px,100%);margin:auto;padding:18px 14px 44px}
+.brand{display:flex;align-items:center;gap:12px;margin:8px 0 18px}
+.logo{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(145deg,var(--surface2),var(--surface));border:1px solid var(--border);font-weight:950;color:var(--orange)}
+h1{font-size:1.3rem;margin:0} h2{font-size:1rem;margin:0} p{margin:0}
+.muted{color:var(--muted)}.small{font-size:.77rem;line-height:1.5}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
+.safe{border-color:rgba(37,226,138,.35);background:rgba(37,226,138,.06)}
+.warning{border-color:rgba(255,176,32,.38);background:rgba(255,176,32,.06)}
+.danger{border-color:rgba(255,99,99,.42);background:rgba(255,99,99,.06)}
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.badge{font-size:.59rem;font-weight:900;letter-spacing:.07em;padding:6px 8px;border-radius:999px;border:1px solid rgba(255,176,32,.3);color:var(--orange);white-space:nowrap}
+button,input{font:inherit}
+button{border:0;border-radius:11px;padding:12px 13px;font-weight:850;cursor:pointer}
+.primary{background:var(--orange);color:#171006;width:100%}
+.safeBtn{background:var(--green);color:#06110b;width:100%}
+.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);width:100%}
+.dangerBtn{background:var(--red);color:#fff;width:100%}
+button:disabled{opacity:.42;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.metric{background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:11px}
+.metric span{display:block;color:var(--muted);font-size:.61rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.metric strong{font-size:1rem;word-break:break-word}
+.step{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:flex-start}
+.num{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--surface2);border:1px solid var(--border);font-weight:900;color:var(--orange)}
+.status{margin-top:10px;border-radius:10px;padding:10px 11px;background:var(--bg);border:1px solid var(--border);font-size:.73rem;line-height:1.45;color:var(--muted)}
+.status.ok{color:var(--green);border-color:rgba(37,226,138,.28)}
+.status.bad{color:var(--red);border-color:rgba(255,99,99,.32)}
+.progress{height:8px;background:var(--surface2);border-radius:999px;overflow:hidden;margin-top:10px}
+.progress i{display:block;height:100%;width:0;background:var(--orange);transition:width .2s}
+#loginCard,#writeCard,#cleanupCard,#doneCard{display:none}
+.field{display:grid;gap:6px;margin-bottom:10px}
+.field label{font-size:.7rem;color:var(--muted);font-weight:800}
+.field input{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;outline:none}
+.field input:focus{border-color:var(--orange)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.7rem}
+@media(max-width:560px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="ribbon">TESTE NUVEM · GRAVAÇÃO CONTROLADA · APENAS 1 CORRIDA TESTE</div>
+
+<main class="shell">
+  <div class="brand">
+    <div class="logo">DC</div>
+    <div><h1>DriveCash — Teste de Gravação</h1><p class="muted small">Cria uma única corrida temporária na nuvem e depois remove somente essa corrida.</p></div>
+  </div>
+
+  <section class="card warning">
+    <div class="head"><div><h2>Proteções deste teste</h2><p class="muted small">Antes de gravar, a página exige que <b>local e nuvem estejam idênticos</b>. Na limpeza, ela relê a nuvem e remove somente o ID criado pelo teste, preservando qualquer outro registro.</p></div><span class="badge">CONTROLADO</span></div>
+    <p class="small muted">Não abra o aplicativo principal enquanto este teste estiver com a corrida fictícia criada. Termine a remoção primeiro.</p>
+  </section>
+
+  <section id="authCard" class="card">
+    <div class="head"><div><h2>Conta Firebase</h2><p id="authText" class="muted small">Verificando sessão...</p></div><span id="authBadge" class="badge">AGUARDE</span></div>
+  </section>
+
+  <section id="loginCard" class="card">
+    <div class="field"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email"></div>
+    <div class="field"><label for="password">Senha</label><input id="password" type="password" autocomplete="current-password"></div>
+    <button id="loginBtn" class="primary">Entrar</button>
+    <div id="loginMsg" class="status">Use o mesmo login do DriveCash. A senha não é salva por esta página.</div>
+  </section>
+
+  <section id="precheckCard" class="card">
+    <div class="step">
+      <div class="num">1</div>
+      <div><h2>Conferir antes de gravar</h2><p class="muted small">Compara <code>dc_rotas</code> local e nuvem novamente. Só libera a escrita se estiver 100% igual.</p></div>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <div class="metric"><span>Local</span><strong id="localCount">—</strong></div>
+      <div class="metric"><span>Nuvem</span><strong id="remoteCount">—</strong></div>
+    </div>
+    <button id="checkBtn" class="secondary" style="margin-top:12px">Verificar agora</button>
+    <div class="progress"><i id="bar"></i></div>
+    <div id="checkStatus" class="status">Aguardando conferência.</div>
+  </section>
+
+  <section id="writeCard" class="card warning">
+    <div class="step">
+      <div class="num">2</div>
+      <div><h2>Criar 1 corrida fictícia</h2><p class="muted small">A página copia a estrutura de uma corrida existente, cria um ID exclusivo de teste e grava apenas <code>dc_rotas</code> na sua conta.</p></div>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <div class="metric"><span>Antes</span><strong id="beforeCount">—</strong></div>
+      <div class="metric"><span>Depois esperado</span><strong id="expectedCount">—</strong></div>
+    </div>
+    <button id="writeBtn" class="primary" style="margin-top:12px">CRIAR CORRIDA TESTE NA NUVEM</button>
+    <div id="writeStatus" class="status">Nenhuma gravação feita.</div>
+  </section>
+
+  <section id="cleanupCard" class="card danger">
+    <div class="step">
+      <div class="num">3</div>
+      <div><h2>Remover somente a corrida de teste</h2><p class="muted small">Este botão relê a versão mais recente da nuvem e retira apenas o ID temporário criado acima.</p></div>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <div class="metric"><span>ID do teste</span><strong id="testId">—</strong></div>
+      <div class="metric"><span>Situação</span><strong id="testState">—</strong></div>
+    </div>
+    <button id="cleanupBtn" class="dangerBtn" style="margin-top:12px">REMOVER SOMENTE A CORRIDA TESTE</button>
+    <div id="cleanupStatus" class="status">Aguardando.</div>
+  </section>
+
+  <section id="doneCard" class="card safe">
+    <div class="step">
+      <div class="num" style="color:var(--green)">✓</div>
+      <div><h2>Teste concluído</h2><p class="muted small">A corrida temporária foi removida. Agora volte à página somente leitura e confirme que local e nuvem estão iguais novamente.</p></div>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { getFirestore, doc, collection, getDocs, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyD6K6hrkmJLEpD5_oMl0Bvl0yhY2jkztq8",
+  authDomain:        "drivecash-d094c.firebaseapp.com",
+  projectId:         "drivecash-d094c",
+  storageBucket:     "drivecash-d094c.firebasestorage.app",
+  messagingSenderId: "716930122730",
+  appId:             "1:716930122730:web:74e836c0a545c4eea5e893",
+  measurementId:     "G-P72GPJZDHR"
+};
+
+const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getFirestore(app);
+const $=id=>document.getElementById(id);
+const TEST_KEY='dc_test_cloud__ride_id_v1';
+const MAX_BYTES=700000, TARGET_CHARS=180000;
+let user=null, precheckOk=false, baselineCount=0;
+
+function safeParse(raw){try{return JSON.parse(raw)}catch(_){return null}}
+function stable(v){
+  if(v===null || typeof v!=='object') return JSON.stringify(v);
+  if(Array.isArray(v)) return '['+v.map(stable).join(',')+']';
+  return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}';
+}
+function utf8Bytes(txt){try{return new Blob([txt]).size}catch(_){return txt.length*2}}
+function hash(txt){
+  let h=2166136261>>>0;
+  for(let i=0;i<txt.length;i++){h^=txt.charCodeAt(i);h=Math.imul(h,16777619)>>>0}
+  return h.toString(16);
+}
+function partId(key,idx){return key+'__part__'+String(idx).padStart(5,'0')}
+function splitJson(txt){
+  const parts=[]; let pos=0;
+  while(pos<txt.length){
+    let end=Math.min(pos+TARGET_CHARS,txt.length);
+    if(end<txt.length){const c=txt.charCodeAt(end-1);if(c>=0xD800&&c<=0xDBFF)end--}
+    let part=txt.slice(pos,end);
+    while(utf8Bytes(part)>MAX_BYTES && end>pos+1000){
+      end=pos+Math.floor((end-pos)*0.75);
+      const c2=txt.charCodeAt(end-1);if(c2>=0xD800&&c2<=0xDBFF)end--;
+      part=txt.slice(pos,end);
+    }
+    if(!part.length) throw new Error('Falha ao dividir histórico.');
+    parts.push(part);pos=end;
+  }
+  return parts;
+}
+async function readRemoteRides(uid){
+  const snap=await getDocs(collection(db,'usuarios',uid,'dados'));
+  let manifest=null; const parts={};
+  snap.forEach(ds=>{
+    const id=ds.id, data=ds.data()||{};
+    if(id==='dc_rotas') manifest=data;
+    else if(id.startsWith('dc_rotas__part__')){
+      const idx=parseInt(id.slice('dc_rotas__part__'.length),10);
+      if(Number.isFinite(idx) && typeof data.conteudo==='string') parts[idx]=data.conteudo;
+    }
+  });
+  if(!manifest) return [];
+  if(!manifest.chunked) return Array.isArray(manifest.valor)?manifest.valor:[];
+  const n=Number(manifest.chunkCount||0);
+  if(!n||n<1||n>5000) throw new Error('Manifesto dc_rotas inválido.');
+  const arr=[];
+  for(let i=0;i<n;i++){
+    if(typeof parts[i]!=='string') throw new Error('Parte da nuvem ausente: '+i);
+    arr.push(parts[i]);
+  }
+  const json=arr.join('');
+  if(manifest.hash && hash(json)!==String(manifest.hash)) throw new Error('Checksum da nuvem inválido.');
+  const value=JSON.parse(json);
+  return Array.isArray(value)?value:[];
+}
+async function writeRemoteRides(uid,rides){
+  const serialized=JSON.stringify(rides), bytes=utf8Bytes(serialized), clientTs=Date.now();
+  if(bytes<=MAX_BYTES){
+    await setDoc(doc(db,'usuarios',uid,'dados','dc_rotas'),{
+      valor:rides,chunked:false,updatedAt:serverTimestamp(),clientUpdatedAt:clientTs
+    });
+    return {chunked:false,bytes};
+  }
+  const parts=splitJson(serialized);
+  for(let base=0;base<parts.length;base+=6){
+    const jobs=[];
+    for(let i=base;i<Math.min(base+6,parts.length);i++){
+      jobs.push(setDoc(doc(db,'usuarios',uid,'dados',partId('dc_rotas',i)),{
+        conteudo:parts[i],parent:'dc_rotas',index:i,total:parts.length,clientUpdatedAt:clientTs
+      }));
+    }
+    await Promise.all(jobs);
+  }
+  await setDoc(doc(db,'usuarios',uid,'dados','dc_rotas'),{
+    chunked:true,format:'json-v1',chunkCount:parts.length,jsonLength:serialized.length,
+    byteLength:bytes,hash:hash(serialized),updatedAt:serverTimestamp(),clientUpdatedAt:clientTs
+  });
+  return {chunked:true,bytes,parts:parts.length};
+}
+function findTest(rides,id){return Array.isArray(rides)?rides.find(x=>x&&String(x.id)===String(id)):null}
+function makeTestRide(localRides){
+  if(!Array.isArray(localRides)||!localRides.length) throw new Error('Não há corrida local para usar como modelo.');
+  const base=JSON.parse(JSON.stringify(localRides[localRides.length-1]||localRides[0]));
+  const id='DC_SYNC_TEST_'+Date.now()+'_'+Math.random().toString(36).slice(2,7).toUpperCase();
+  const today=new Date().toISOString().slice(0,10);
+  base.id=id;
+  if('data' in base) base.data=today; else base.data=today;
+  if('date' in base) base.date=today;
+  if('valor' in base) base.valor=0.01;
+  if('value' in base) base.value=0.01;
+  if('valorTotal' in base) base.valorTotal=0.01;
+  if('total' in base && typeof base.total==='number') base.total=0.01;
+  base.observacao='TESTE NUVEM — REMOVER';
+  base.obs='TESTE NUVEM — REMOVER';
+  base._dcCloudWriteTest=true;
+  base._dcCloudWriteTestCreatedAt=new Date().toISOString();
+  return base;
+}
+async function recoverExistingTest(){
+  const id=localStorage.getItem(TEST_KEY);
+  if(!id||!user)return;
+  try{
+    const remote=await readRemoteRides(user.uid);
+    if(findTest(remote,id)){
+      $('cleanupCard').style.display='block';
+      $('testId').textContent=id;
+      $('testState').textContent='ENCONTRADA NA NUVEM';
+      $('cleanupStatus').className='status ok';
+      $('cleanupStatus').textContent='A corrida de teste ainda está na nuvem. Remova-a antes de continuar.';
+      $('writeCard').style.display='none';
+      precheckOk=false;
+    }else{
+      localStorage.removeItem(TEST_KEY);
+    }
+  }catch(e){
+    $('checkStatus').className='status bad';
+    $('checkStatus').textContent='Não foi possível verificar teste pendente: '+(e?.message||e);
+  }
+}
+$('checkBtn').addEventListener('click',async()=>{
+  if(!user)return;
+  $('checkBtn').disabled=true; $('bar').style.width='20%';
+  $('checkStatus').className='status'; $('checkStatus').textContent='Lendo local e nuvem...';
+  try{
+    const pending=localStorage.getItem(TEST_KEY);
+    if(pending) throw new Error('Existe um teste pendente. Remova-o primeiro.');
+    const local=safeParse(localStorage.getItem('dc_rotas'))||[];
+    $('bar').style.width='45%';
+    const remote=await readRemoteRides(user.uid);
+    $('bar').style.width='80%';
+    $('localCount').textContent=local.length;
+    $('remoteCount').textContent=remote.length;
+    baselineCount=local.length;
+    if(!Array.isArray(local)||!Array.isArray(remote)||stable(local)!==stable(remote)){
+      precheckOk=false;
+      $('writeCard').style.display='none';
+      $('checkStatus').className='status bad';
+      $('checkStatus').textContent='BLOQUEADO: local e nuvem não estão idênticos. Não grave nada.';
+    }else{
+      precheckOk=true;
+      $('writeCard').style.display='block';
+      $('beforeCount').textContent=baselineCount;
+      $('expectedCount').textContent=baselineCount+1;
+      $('checkStatus').className='status ok';
+      $('checkStatus').textContent='PERFEITO: local e nuvem estão idênticos. A gravação controlada foi liberada.';
+    }
+    $('bar').style.width='100%';
+  }catch(e){
+    precheckOk=false;$('writeCard').style.display='none';
+    $('checkStatus').className='status bad';
+    $('checkStatus').textContent='BLOQUEADO: '+(e?.message||e);
+  }finally{$('checkBtn').disabled=false}
+});
+$('writeBtn').addEventListener('click',async()=>{
+  if(!user||!precheckOk)return;
+  $('writeBtn').disabled=true;
+  $('writeStatus').className='status';$('writeStatus').textContent='Conferindo novamente antes da gravação...';
+  try{
+    const local=safeParse(localStorage.getItem('dc_rotas'))||[];
+    const remote=await readRemoteRides(user.uid);
+    if(stable(local)!==stable(remote)) throw new Error('Local/nuvem mudaram após a conferência. Gravação cancelada.');
+    const test=makeTestRide(local);
+    localStorage.setItem(TEST_KEY,test.id);
+    const next=remote.concat([test]);
+    $('writeStatus').textContent='Gravando somente a corrida de teste...';
+    await writeRemoteRides(user.uid,next);
+    const verify=await readRemoteRides(user.uid);
+    if(!findTest(verify,test.id)) throw new Error('A corrida não apareceu após a gravação.');
+    $('writeStatus').className='status ok';
+    $('writeStatus').textContent='SUCESSO: nuvem agora tem '+verify.length+' corridas. Recarregue esta página uma vez; a corrida de teste deverá continuar aparecendo.';
+    $('testId').textContent=test.id;
+    $('testState').textContent='GRAVADA';
+    $('cleanupCard').style.display='block';
+    $('cleanupStatus').textContent='Antes de voltar ao app principal, remova esta corrida de teste.';
+    $('cleanupStatus').className='status bad';
+    $('writeBtn').disabled=true;
+  }catch(e){
+    $('writeStatus').className='status bad';
+    $('writeStatus').textContent='ERRO: '+(e?.message||e)+'. Se um ID de teste tiver sido criado, use a seção de remoção.';
+    const id=localStorage.getItem(TEST_KEY);
+    if(id){$('testId').textContent=id;$('cleanupCard').style.display='block'}
+    $('writeBtn').disabled=false;
+  }
+});
+$('cleanupBtn').addEventListener('click',async()=>{
+  if(!user)return;
+  const id=localStorage.getItem(TEST_KEY);
+  if(!id){$('cleanupStatus').className='status bad';$('cleanupStatus').textContent='Nenhum ID de teste salvo.';return}
+  $('cleanupBtn').disabled=true;
+  $('cleanupStatus').className='status';$('cleanupStatus').textContent='Relendo a nuvem e removendo somente '+id+'...';
+  try{
+    const latest=await readRemoteRides(user.uid);
+    const exists=findTest(latest,id);
+    if(!exists){
+      localStorage.removeItem(TEST_KEY);
+      $('cleanupStatus').className='status ok';
+      $('cleanupStatus').textContent='A corrida de teste já não existe na nuvem.';
+      $('doneCard').style.display='block';
+      return;
+    }
+    const cleaned=latest.filter(x=>!(x&&String(x.id)===String(id)));
+    await writeRemoteRides(user.uid,cleaned);
+    const verify=await readRemoteRides(user.uid);
+    if(findTest(verify,id)) throw new Error('O ID de teste ainda aparece após a limpeza.');
+    localStorage.removeItem(TEST_KEY);
+    $('testState').textContent='REMOVIDA';
+    $('cleanupStatus').className='status ok';
+    $('cleanupStatus').textContent='SUCESSO: removemos somente a corrida de teste. Nuvem agora tem '+verify.length+' corridas.';
+    $('doneCard').style.display='block';
+    $('cleanupBtn').disabled=true;
+  }catch(e){
+    $('cleanupStatus').className='status bad';
+    $('cleanupStatus').textContent='ERRO NA LIMPEZA: '+(e?.message||e)+'. Não abra o app principal; tente a remoção novamente.';
+    $('cleanupBtn').disabled=false;
+  }
+});
+$('loginBtn').addEventListener('click',async()=>{
+  $('loginBtn').disabled=true;$('loginMsg').textContent='Entrando...';
+  try{
+    await signInWithEmailAndPassword(auth,$('email').value.trim(),$('password').value);
+    $('password').value='';
+  }catch(e){$('loginMsg').className='status bad';$('loginMsg').textContent='Erro: '+(e?.code||e?.message||e)}
+  finally{$('loginBtn').disabled=false}
+});
+onAuthStateChanged(auth,async u=>{
+  user=u||null;
+  if(user){
+    $('authText').textContent='Sessão encontrada. Conta pronta para o teste.';
+    $('authBadge').textContent='AUTENTICADO';
+    $('loginCard').style.display='none';
+    $('precheckCard').style.display='block';
+    await recoverExistingTest();
+  }else{
+    $('authText').textContent='Nenhuma sessão ativa. Faça login abaixo.';
+    $('authBadge').textContent='LOGIN';
+    $('loginCard').style.display='block';
+    $('precheckCard').style.display='none';
+  }
+});
+</script>
+</body>
+</html>
