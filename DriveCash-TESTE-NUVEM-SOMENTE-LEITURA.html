@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07110d">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self' data: blob:;
+               script-src 'self' 'unsafe-inline' https://www.gstatic.com;
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' data:;
+               connect-src https://*.googleapis.com https://*.firebaseio.com;
+               font-src 'self' data:;
+               frame-src 'none';
+               object-src 'none';
+               base-uri 'none';
+               form-action 'self';">
+<title>DriveCash — Teste Nuvem Somente Leitura</title>
+<style>
+:root{
+  --bg:#0b0f14;--surface:#111821;--surface2:#17212d;--border:#253241;
+  --text:#f4f7fb;--muted:#8491a3;--green:#25e28a;--gold:#f2c94c;
+  --red:#ff6363;--orange:#ffb020;--blue:#6da9ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.ribbon{position:sticky;top:0;z-index:10;background:#0f7a4f;color:#fff;text-align:center;padding:9px 12px;font-size:.72rem;font-weight:900;letter-spacing:.08em}
+.shell{width:min(720px,100%);margin:auto;padding:18px 14px 40px}
+.brand{display:flex;align-items:center;gap:12px;margin:8px 0 18px}
+.logo{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(145deg,var(--surface2),var(--surface));border:1px solid var(--border);font-weight:950;color:var(--green)}
+h1{font-size:1.35rem;margin:0} h2{font-size:1rem;margin:0}
+p{margin:0}.muted{color:var(--muted)}.small{font-size:.78rem;line-height:1.5}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
+.safe{border-color:rgba(37,226,138,.35);background:rgba(37,226,138,.06)}
+.warning{border-color:rgba(255,176,32,.35);background:rgba(255,176,32,.06)}
+.danger{border-color:rgba(255,99,99,.38);background:rgba(255,99,99,.06)}
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.badge{font-size:.6rem;font-weight:900;letter-spacing:.07em;padding:6px 8px;border-radius:999px;background:rgba(37,226,138,.1);color:var(--green);border:1px solid rgba(37,226,138,.25);white-space:nowrap}
+button,input{font:inherit}
+button{border:0;border-radius:11px;padding:11px 13px;font-weight:850;cursor:pointer}
+.primary{background:var(--green);color:#06110b;width:100%}
+.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.field{display:grid;gap:6px;margin-bottom:10px}.field label{font-size:.7rem;color:var(--muted);font-weight:800}
+.field input{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;outline:none}
+.field input:focus{border-color:var(--green)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.metric{background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:11px}
+.metric span{display:block;color:var(--muted);font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.metric strong{font-size:1rem}
+.dataset{display:grid;gap:9px;margin-top:12px}
+.row{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px}
+.rowtop{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:9px}
+.rowname{font-weight:850;font-size:.86rem}
+.status{font-size:.62rem;font-weight:900;border-radius:999px;padding:5px 7px;border:1px solid var(--border)}
+.status.ok{color:var(--green);border-color:rgba(37,226,138,.3)}
+.status.bad{color:var(--red);border-color:rgba(255,99,99,.35)}
+.status.warn{color:var(--orange);border-color:rgba(255,176,32,.35)}
+.mini{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.mini div{background:var(--surface);border-radius:8px;padding:8px;text-align:center;min-width:0}
+.mini span{display:block;color:var(--muted);font-size:.52rem;margin-bottom:3px}
+.mini strong{font-size:.72rem;word-break:break-word}
+.details{margin-top:8px;color:var(--muted);font-size:.65rem;line-height:1.45;word-break:break-word}
+#loginCard,#compareCard,#resultCard{display:none}
+.progress{height:8px;background:var(--surface2);border-radius:999px;overflow:hidden;margin-top:10px}
+.progress i{display:block;height:100%;width:0;background:var(--green);transition:width .2s}
+.verdict{font-weight:900;font-size:1rem;margin-bottom:5px}
+.code-note{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.68rem;color:var(--muted)}
+@media(max-width:560px){
+  .mini{grid-template-columns:repeat(2,1fr)}
+  .grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="ribbon">TESTE NUVEM · SOMENTE LEITURA · NENHUMA GRAVAÇÃO FIRESTORE</div>
+<main class="shell">
+  <div class="brand">
+    <div class="logo">DC</div>
+    <div><h1>DriveCash — Conferência da Nuvem</h1><p class="muted small">Compara os dados deste aparelho com o Firestore sem alterar nenhum registro.</p></div>
+  </div>
+
+  <section class="card safe">
+    <div class="head"><div><h2>Proteção ativa</h2><p class="muted small">Esta página importa apenas funções de leitura do Firestore. Não existem chamadas de criar, editar ou excluir dados.</p></div><span class="badge">READ ONLY</span></div>
+    <p class="code-note">Firestore permitido: getDocs / leitura. Firestore bloqueado por código: setDoc, addDoc, updateDoc, deleteDoc.</p>
+  </section>
+
+  <section id="authCard" class="card">
+    <div class="head"><div><h2>1. Conta Firebase</h2><p id="authText" class="muted small">Verificando sessão já existente...</p></div><span id="authBadge" class="badge">AGUARDE</span></div>
+  </section>
+
+  <section id="loginCard" class="card">
+    <h2 style="margin-bottom:10px">Entrar somente para leitura</h2>
+    <p class="muted small" style="margin-bottom:12px">Se a sessão do DriveCash não estiver ativa, use o mesmo login do aplicativo. A senha não é salva por esta página.</p>
+    <div class="field"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email"></div>
+    <div class="field"><label for="password">Senha</label><input id="password" type="password" autocomplete="current-password"></div>
+    <button id="loginBtn" class="primary">Entrar e conferir</button>
+    <p id="loginMsg" class="muted small" style="margin-top:9px"></p>
+  </section>
+
+  <section id="compareCard" class="card">
+    <div class="head"><div><h2>2. Comparação</h2><p class="muted small">A leitura verifica quantidades, IDs e conteúdo dos registros.</p></div><span class="badge">SEM ALTERAR</span></div>
+    <div class="grid">
+      <div class="metric"><span>Conta</span><strong id="userEmail">—</strong></div>
+      <div class="metric"><span>Dados críticos</span><strong>5 conjuntos</strong></div>
+    </div>
+    <button id="compareBtn" class="primary" style="margin-top:12px">Ler nuvem e comparar agora</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <p id="progressText" class="muted small" style="margin-top:8px">Aguardando sua confirmação.</p>
+  </section>
+
+  <section id="resultCard" class="card">
+    <div id="verdictBox"></div>
+    <div id="datasetResults" class="dataset"></div>
+  </section>
+
+  <section class="card warning">
+    <h2 style="margin-bottom:6px">Regra deste teste</h2>
+    <p class="muted small">Mesmo que tudo apareça perfeito, esta página não libera sincronização. Ela serve apenas para sabermos se local e nuvem estão realmente iguais antes do teste controlado de gravação.</p>
+  </section>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyD6K6hrkmJLEpD5_oMl0Bvl0yhY2jkztq8",
+  authDomain:        "drivecash-d094c.firebaseapp.com",
+  projectId:         "drivecash-d094c",
+  storageBucket:     "drivecash-d094c.firebasestorage.app",
+  messagingSenderId: "716930122730",
+  appId:             "1:716930122730:web:74e836c0a545c4eea5e893",
+  measurementId:     "G-P72GPJZDHR"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const CRITICAL = [
+  {key:'dc_rotas',label:'Corridas'},
+  {key:'dc_empresas',label:'Empresas'},
+  {key:'dc_despesas',label:'Despesas'},
+  {key:'dc_pagamentos',label:'Pagamentos'},
+  {key:'dc_custos',label:'Custos'}
+];
+
+const el = id => document.getElementById(id);
+const authCard=el('authCard'), loginCard=el('loginCard'), compareCard=el('compareCard'), resultCard=el('resultCard');
+let currentUser=null;
+
+function safeParse(raw){
+  if(raw===null || raw===undefined) return null;
+  try{return JSON.parse(raw)}catch(_){return null}
+}
+function stable(v){
+  if(v===null || typeof v!=='object') return JSON.stringify(v);
+  if(Array.isArray(v)) return '['+v.map(stable).join(',')+']';
+  return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}';
+}
+function fnv1a(txt){
+  let h=2166136261>>>0;
+  for(let i=0;i<txt.length;i++){h^=txt.charCodeAt(i);h=Math.imul(h,16777619)>>>0}
+  return h.toString(16);
+}
+function partId(key,idx){return key+'__part__'+String(idx).padStart(5,'0')}
+function itemKey(item,index){
+  if(item && typeof item==='object'){
+    for(const k of ['id','uid','uuid','codigo','chave']){
+      if(item[k]!==undefined && item[k]!==null && String(item[k])!=='') return k+':'+String(item[k]);
+    }
+  }
+  return 'hash:'+fnv1a(stable(item))+'#'+index;
+}
+function countOf(v){
+  if(Array.isArray(v)) return v.length;
+  if(v && typeof v==='object') return Object.keys(v).length;
+  if(v===null || v===undefined || v==='') return 0;
+  return 1;
+}
+function compareValues(localVal,remoteVal){
+  const out={local:countOf(localVal),remote:countOf(remoteVal),missing:0,extra:0,conflicts:0,missingKeys:[],extraKeys:[],conflictKeys:[]};
+  if(Array.isArray(localVal) && Array.isArray(remoteVal)){
+    const lm=new Map(), rm=new Map();
+    localVal.forEach((x,i)=>lm.set(itemKey(x,i),x));
+    remoteVal.forEach((x,i)=>rm.set(itemKey(x,i),x));
+    for(const [k,v] of lm){
+      if(!rm.has(k)){out.missing++;if(out.missingKeys.length<8)out.missingKeys.push(k)}
+      else if(stable(v)!==stable(rm.get(k))){out.conflicts++;if(out.conflictKeys.length<8)out.conflictKeys.push(k)}
+    }
+    for(const [k] of rm){if(!lm.has(k)){out.extra++;if(out.extraKeys.length<8)out.extraKeys.push(k)}}
+  }else{
+    if(stable(localVal)!==stable(remoteVal)) out.conflicts=1;
+  }
+  out.ok=out.local===out.remote && out.missing===0 && out.extra===0 && out.conflicts===0;
+  return out;
+}
+async function readRemote(uid){
+  const snap=await getDocs(collection(db,'usuarios',uid,'dados'));
+  const docs={}, parts={};
+  snap.forEach(ds=>{
+    const id=ds.id, data=ds.data()||{};
+    const p=id.indexOf('__part__');
+    if(p>0){
+      const parent=id.slice(0,p), idx=parseInt(id.slice(p+8),10);
+      if(!parts[parent]) parts[parent]={};
+      if(Number.isFinite(idx) && typeof data.conteudo==='string') parts[parent][idx]=data.conteudo;
+    }else{
+      docs[id]=data;
+    }
+  });
+  const out={};
+  for(const [key,data] of Object.entries(docs)){
+    if(!data.chunked){out[key]=data.valor;continue}
+    const n=Number(data.chunkCount||0);
+    if(!n || n<1 || n>5000) throw new Error('Manifesto inválido em '+key);
+    const arr=[];
+    for(let i=0;i<n;i++){
+      if(!parts[key] || typeof parts[key][i]!=='string') throw new Error('Parte ausente em '+key+': '+partId(key,i));
+      arr.push(parts[key][i]);
+    }
+    const json=arr.join('');
+    if(data.hash && fnv1a(json)!==String(data.hash)) throw new Error('Checksum inválido em '+key);
+    out[key]=JSON.parse(json);
+  }
+  return out;
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function renderResults(results){
+  const allOk=results.every(r=>r.c.ok);
+  const verdict=el('verdictBox');
+  if(allOk){
+    resultCard.className='card safe';
+    verdict.innerHTML='<div class="verdict" style="color:var(--green)">✅ LOCAL E NUVEM ESTÃO IGUAIS</div><p class="muted small">Nenhuma diferença foi encontrada nos conjuntos críticos. Podemos avançar depois para um teste de gravação controlado, mas esta página continuará somente leitura.</p>';
+  }else{
+    resultCard.className='card danger';
+    verdict.innerHTML='<div class="verdict" style="color:var(--red)">⛔ PARE AQUI — HÁ DIFERENÇAS</div><p class="muted small">Não devemos liberar gravação na nuvem enquanto houver registros faltando, extras ou diferentes.</p>';
+  }
+  el('datasetResults').innerHTML=results.map(({label,key,c})=>{
+    const cls=c.ok?'ok':(c.conflicts||c.missing||c.extra?'bad':'warn');
+    const text=c.ok?'PERFEITO':'DIFERENTE';
+    let det=[];
+    if(c.missingKeys.length)det.push('Só no local: '+c.missingKeys.join(', '));
+    if(c.extraKeys.length)det.push('Só na nuvem: '+c.extraKeys.join(', '));
+    if(c.conflictKeys.length)det.push('Mesmo ID, conteúdo diferente: '+c.conflictKeys.join(', '));
+    return `<div class="row">
+      <div class="rowtop"><div><div class="rowname">${esc(label)}</div><div class="muted small">${esc(key)}</div></div><span class="status ${cls}">${text}</span></div>
+      <div class="mini">
+        <div><span>LOCAL</span><strong>${c.local}</strong></div>
+        <div><span>NUVEM</span><strong>${c.remote}</strong></div>
+        <div><span>SÓ LOCAL</span><strong>${c.missing}</strong></div>
+        <div><span>SÓ NUVEM</span><strong>${c.extra}</strong></div>
+        <div><span>CONFLITOS</span><strong>${c.conflicts}</strong></div>
+      </div>
+      ${det.length?`<div class="details">${esc(det.join(' | '))}</div>`:''}
+    </div>`;
+  }).join('');
+  resultCard.style.display='block';
+}
+async function runCompare(){
+  if(!currentUser)return;
+  el('compareBtn').disabled=true;
+  resultCard.style.display='none';
+  el('progressBar').style.width='12%';
+  el('progressText').textContent='Lendo dados locais...';
+  try{
+    const local={};
+    CRITICAL.forEach(x=>local[x.key]=safeParse(localStorage.getItem(x.key)));
+    el('progressBar').style.width='35%';
+    el('progressText').textContent='Lendo Firestore em modo somente leitura...';
+    const remote=await readRemote(currentUser.uid);
+    el('progressBar').style.width='75%';
+    el('progressText').textContent='Comparando IDs e conteúdo...';
+    const results=CRITICAL.map(x=>({label:x.label,key:x.key,c:compareValues(local[x.key],remote[x.key]??null)}));
+    renderResults(results);
+    el('progressBar').style.width='100%';
+    el('progressText').textContent='Conferência concluída. Nenhum dado foi gravado.';
+  }catch(e){
+    resultCard.className='card danger';
+    el('verdictBox').innerHTML='<div class="verdict" style="color:var(--red)">Erro na leitura</div><p class="muted small">'+esc(e?.message||e)+'</p>';
+    el('datasetResults').innerHTML='';
+    resultCard.style.display='block';
+    el('progressText').textContent='A comparação não foi concluída.';
+  }finally{
+    el('compareBtn').disabled=false;
+  }
+}
+el('compareBtn').addEventListener('click',runCompare);
+
+el('loginBtn').addEventListener('click',async()=>{
+  const email=el('email').value.trim(), pass=el('password').value;
+  el('loginMsg').textContent='Entrando...';
+  el('loginBtn').disabled=true;
+  try{
+    await signInWithEmailAndPassword(auth,email,pass);
+    el('password').value='';
+    el('loginMsg').textContent='Login confirmado.';
+  }catch(e){
+    el('loginMsg').textContent='Não foi possível entrar: '+(e?.code||e?.message||'erro');
+  }finally{el('loginBtn').disabled=false}
+});
+
+onAuthStateChanged(auth,user=>{
+  currentUser=user||null;
+  if(user){
+    el('authText').textContent='Sessão encontrada. Conta pronta para leitura.';
+    el('authBadge').textContent='AUTENTICADO';
+    loginCard.style.display='none';
+    compareCard.style.display='block';
+    el('userEmail').textContent=user.email||'Conta autenticada';
+  }else{
+    el('authText').textContent='Nenhuma sessão ativa. Faça login abaixo para a conferência.';
+    el('authBadge').textContent='LOGIN';
+    loginCard.style.display='block';
+    compareCard.style.display='none';
+    resultCard.style.display='none';
+  }
+});
+</script>
+</body>
+</html>
