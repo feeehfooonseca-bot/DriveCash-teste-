@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DriveCash — teste v1.19.10</title>
+<style>
+html,body{margin:0;min-height:100%;background:#050807;color:#f4f7f5;font-family:Inter,system-ui,sans-serif}
+#loader{min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center}
+#loader strong{display:block;color:#03ca8a;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div id="loader"><div><strong>DriveCash · TESTE</strong><span>Carregando v1.19.10…</span></div></div>
+<script>
+(async()=>{
+  const BASE='DriveCash-MOTOBOY-FECHAMENTO-v1.19.8-TESTE.html?v=base-1198';
+  try{
+    const response=await fetch(BASE,{cache:'no-store'});
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    let html=await response.text();
+
+    html=html.replaceAll('v1.19.8-cloud-test-cobrancas-firestore','v1.19.10-cloud-test-cobrancas-firestore-auth-ready-fix');
+    html=html.replaceAll('dc-billing-cloud-v1198','dc-billing-cloud-v11910');
+    html=html.replaceAll('DriveCash — teste v1.19.8','DriveCash — teste v1.19.10');
+    html=html.replaceAll('Carregando v1.19.8…','Carregando v1.19.10…');
+
+    const oldStorage=`window.addEventListener('drivecash:storage',event=>{
+  if(event.detail?.key==='dc_cfg'){
+    const cloud=cloudSnapshot();
+    if(cloud && Object.keys(cloud).length){
+      setTimeout(()=>{
+        applyCloudToLocal();
+        scheduleSync('config-update',500);
+      },80);
+    }
+  }
+});`;
+
+    const newStorage=`window.addEventListener('drivecash:storage',event=>{
+  if(event.detail?.key==='dc_cfg'){
+    /* O ciclo principal acabou de atualizar/restaurar dc_cfg. Mesmo na
+       primeira sincronização, quando billingCloudV1 ainda não existe,
+       isso confirma que já podemos iniciar a Central com segurança. */
+    restoreSeen=true;
+    const cloud=cloudSnapshot();
+    setTimeout(()=>{
+      if(cloud && Object.keys(cloud).length)applyCloudToLocal();
+      scheduleSync('config-update',500);
+    },80);
+  }
+});`;
+
+    if(!html.includes(oldStorage))throw new Error('Ponto de correção storage não encontrado');
+    html=html.replace(oldStorage,newStorage);
+
+    const bootPatch=`let bootstrapFallbackTimer=0;
+
+function scheduleBootstrapFallback(delay=6000){
+  clearTimeout(bootstrapFallbackTimer);
+  const firstConfig=comparable(getState()?.config||{});
+
+  bootstrapFallbackTimer=setTimeout(()=>{
+    if(restoreSeen || saving || !currentUser())return;
+
+    const cloud=cloudSnapshot();
+    if(cloud && Object.keys(cloud).length){
+      restoreSeen=true;
+      applyCloudToLocal();
+      scheduleSync('bootstrap-cloud',180);
+      return;
+    }
+
+    /* Se nenhum evento de restore chegou ao módulo, confirma que a config
+       permaneceu estável antes de permitir a primeira gravação. Isso evita
+       sobrescrever uma restauração remota que ainda esteja chegando. */
+    const secondConfig=comparable(getState()?.config||{});
+    if(firstConfig===secondConfig){
+      restoreSeen=true;
+      setStatus('pending','Cobranças · concluindo sincronização com a nuvem…');
+      scheduleSync('restore-fallback',180);
+      return;
+    }
+
+    scheduleBootstrapFallback(3000);
+  },delay);
+}
+
+let billingAuthTimer=0;
+
+function waitForBillingAuth(tries=0){
+  clearTimeout(billingAuthTimer);
+
+  billingAuthTimer=setTimeout(()=>{
+    ensureStatus();
+
+    if(currentUser()){
+      const cloud=cloudSnapshot();
+
+      if(cloud && Object.keys(cloud).length){
+        restoreSeen=true;
+        applyCloudToLocal();
+        scheduleSync('auth-ready-cloud',250);
+        return;
+      }
+
+      if(restoreSeen){
+        scheduleSync('auth-ready',250);
+        return;
+      }
+
+      /* A autenticação acabou de ficar disponível, mas a configuração
+         remota ainda pode estar chegando. Usa o fallback protegido por
+         estabilidade antes da primeira gravação. */
+      setStatus('pending','Cobranças · conta conectada; preparando sincronização…');
+      scheduleBootstrapFallback(1800);
+      return;
+    }
+
+    if(tries < 40){
+      setStatus('pending','Cobranças · aguardando conexão com a conta…');
+      waitForBillingAuth(tries+1);
+    }else{
+      setStatus('pending','Cobranças · aguardando conexão com a conta');
+    }
+  }, tries===0 ? 250 : 500);
+}
+
+document.addEventListener('click',event=>{
+  if(!event.target.closest?.('#dc-billing-central-refresh'))return;
+  if(!currentUser()){
+    setStatus('pending','Cobranças · aguardando conexão com a conta…');
+    waitForBillingAuth();
+    return;
+  }
+  const cloud=cloudSnapshot();
+  if(cloud && Object.keys(cloud).length){
+    restoreSeen=true;
+    applyCloudToLocal();
+    scheduleSync('manual-refresh',120);
+  }else if(!restoreSeen){
+    scheduleBootstrapFallback(1800);
+  }else{
+    scheduleSync('manual-refresh',120);
+  }
+},true);
+
+function boot(){`;
+
+    if(!html.includes('function boot(){'))throw new Error('Ponto de correção boot não encontrado');
+    html=html.replace('function boot(){',bootPatch);
+
+    const pendingAnchor="    setStatus('pending','Cobranças · aguardando restauração da nuvem');\n  }else{";
+    const pendingPatch="    setStatus('pending','Cobranças · aguardando restauração da nuvem');\n    scheduleBootstrapFallback();\n  }else{";
+    if(!html.includes(pendingAnchor))throw new Error('Ponto de correção pending não encontrado');
+    html=html.replace(pendingAnchor,pendingPatch);
+
+    const authBootAnchor="  }else{\n    setStatus('pending','Cobranças · salvas neste aparelho; entre na conta para sincronizar');\n  }\n\n  /* O status é recriado caso o Financeiro seja renderizado novamente. */";
+    const authBootPatch="  }else{\n    /* A sessão Firebase pode ser restaurada alguns instantes depois do módulo iniciar. */\n    setStatus('pending','Cobranças · aguardando conexão com a conta…');\n    waitForBillingAuth();\n  }\n\n  /* O status é recriado caso o Financeiro seja renderizado novamente. */";
+    if(!html.includes(authBootAnchor))throw new Error('Ponto de correção auth boot não encontrado');
+    html=html.replace(authBootAnchor,authBootPatch);
+
+    document.open();
+    document.write(html);
+    document.close();
+  }catch(err){
+    document.getElementById('loader').innerHTML=
+      '<div><strong>Não foi possível carregar o DriveCash v1.19.10</strong><span>Recarregue a página. Nenhum dado foi apagado.</span></div>';
+    console.error('DriveCash v1.19.10 loader',err);
+  }
+})();
+</script>
+</body>
+</html>
