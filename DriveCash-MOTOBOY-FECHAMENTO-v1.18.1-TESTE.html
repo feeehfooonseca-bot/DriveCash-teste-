@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DriveCash — teste v1.18.1</title>
+<style>
+html,body{margin:0;min-height:100%;background:#050807;color:#f4f7f5;font-family:Inter,system-ui,sans-serif}
+#loader{min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center}
+#loader strong{display:block;color:#03ca8a;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div id="loader"><div><strong>DriveCash · TESTE</strong><span>Carregando v1.18.1…</span></div></div>
+<script>
+(async()=>{
+  const BASE='DriveCash-MOTOBOY-FECHAMENTO-EMPRESA-TESTE.html?v=base-1180';
+  try{
+    const response=await fetch(BASE,{cache:'no-store'});
+    if(!response.ok) throw new Error('HTTP '+response.status);
+    let html=await response.text();
+    html=html.replace('v1.18.0-cloud-test-fechamento-empresa-push-pro','v1.18.1-cloud-test-fechamento-metodo-pagamento-pagos-expansivel');
+
+    const patch=String.raw`
+<style id="dc-closing-v1181-style">
+.dc-payment-method-field{margin-top:0}
+.dc-closing-paid-group{margin-top:12px;border:1px solid rgba(37,226,138,.15);border-radius:16px;background:rgba(37,226,138,.025);overflow:hidden}
+.dc-closing-paid-group>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 14px;color:var(--green);font-size:.72rem;font-weight:850;user-select:none}
+.dc-closing-paid-group>summary::-webkit-details-marker{display:none}
+.dc-closing-paid-group>summary .dc-paid-summary-copy{display:grid;gap:2px}
+.dc-closing-paid-group>summary small{color:var(--muted);font-size:.58rem;font-weight:650}
+.dc-closing-paid-group>summary b{width:28px;height:28px;display:grid;place-items:center;border-radius:999px;background:rgba(37,226,138,.09);font-size:1rem;transition:transform .16s ease}
+.dc-closing-paid-group[open]>summary b{transform:rotate(180deg)}
+.dc-closing-paid-body{display:grid;gap:10px;padding:0 10px 10px;border-top:1px solid rgba(255,255,255,.05)}
+.dc-closing-paid-body .company-closing-row{margin-top:10px}
+.dc-closing-empty{padding:12px 13px;border:1px dashed var(--border);border-radius:13px;color:var(--muted);font-size:.68rem;line-height:1.45;background:rgba(255,255,255,.015)}
+.dc-closing-payment-hint{margin:-2px 0 12px;padding:9px 10px;border-radius:11px;border:1px solid rgba(37,226,138,.14);background:rgba(37,226,138,.035);color:var(--muted);font-size:.62rem;line-height:1.4}
+</style>
+<script id="dc-closing-v1181-script">
+(()=>{
+  'use strict';
+  const $=s=>document.querySelector(s);
+  const norm=s=>String(s||'').trim().toLocaleLowerCase('pt-BR');
+  const methods=[['pix','PIX'],['dinheiro','Dinheiro'],['transferencia','Transferência bancária'],['cartao','Cartão'],['outro','Outro']];
+  let organizing=false, pendingOrganize=0;
+
+  function localDate(){
+    const d=new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function parseBRL(text){
+    const m=String(text||'').match(/R\$\s*([\d.]+(?:,\d{1,2})?)/i);
+    if(!m)return 0;
+    return Number(m[1].replace(/\./g,'').replace(',','.'))||0;
+  }
+  function closingOpenAmount(row){
+    const chips=[...row.querySelectorAll('.company-closing-chip')];
+    const openChip=chips.find(el=>/total em aberto/i.test(el.textContent||''));
+    if(openChip)return parseBRL(openChip.textContent);
+    const total=row.querySelector('.company-closing-total strong');
+    return parseBRL(total?.textContent||'');
+  }
+  function companyName(row){
+    return String(row.querySelector('.company-closing-head h3')?.textContent||'').trim();
+  }
+
+  function installPaymentMethod(){
+    const form=$('#payment-form');
+    if(!form||$('#payment-method'))return;
+    const note=$('#payment-note')?.closest('.field');
+    if(!note)return;
+    const field=document.createElement('div');
+    field.className='field dc-payment-method-field';
+    field.innerHTML='<label for="payment-method">Forma de pagamento</label><select id="payment-method" required><option value="">Selecionar...</option>'+methods.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('')+'</select>';
+    note.before(field);
+    const hint=document.createElement('div');
+    hint.className='dc-closing-payment-hint';
+    hint.textContent='A forma selecionada será registrada junto ao recebimento e ficará identificada na observação do pagamento.';
+    field.after(hint);
+  }
+
+  function selectCompanyByName(name){
+    const select=$('#payment-company');
+    if(!select)return false;
+    const target=[...select.options].find(o=>norm(o.textContent)===norm(name));
+    if(!target)return false;
+    select.value=target.value;
+    select.dispatchEvent(new Event('change',{bubbles:true}));
+    return true;
+  }
+
+  function openClosingPayment(row){
+    installPaymentMethod();
+    const form=$('#payment-form');
+    if(!form)return;
+    const name=companyName(row);
+    const amount=closingOpenAmount(row);
+    const period=$('#company-closing-period')?.value||'';
+    const title=$('#payment-form-title');
+    if(title)title.textContent='Marcar período como pago';
+    selectCompanyByName(name);
+    const value=$('#payment-value'); if(value)value.value=amount>0?amount.toFixed(2):'';
+    const date=$('#payment-date'); if(date&&!date.value)date.value=localDate();
+    const competence=$('#payment-period'); if(competence&&period)competence.value=period;
+    const method=$('#payment-method'); if(method)method.value='';
+    const note=$('#payment-note'); if(note)note.value='';
+    form.classList.remove('hidden');
+    form.dataset.fromClosing='1';
+    form.dataset.closingCompany=name;
+    form.dataset.closingPeriod=period;
+    setTimeout(()=>{
+      try{form.scrollIntoView({behavior:'smooth',block:'start'});}catch(_){ }
+      try{method?.focus();}catch(_){ }
+    },30);
+  }
+
+  function isPaidRow(row){
+    if(row.classList.contains('is-paid'))return true;
+    if(row.querySelector('.company-closing-paid-badge'))return true;
+    return closingOpenAmount(row)<=0.0001;
+  }
+
+  function organizeClosing(){
+    if(organizing)return;
+    const list=$('#company-closing-list');
+    if(!list)return;
+    organizing=true;
+    try{
+      const old=list.querySelector(':scope > .dc-closing-paid-group');
+      if(old){
+        const body=old.querySelector('.dc-closing-paid-body');
+        if(body)[...body.children].forEach(el=>list.insertBefore(el,old));
+        old.remove();
+      }
+      list.querySelector(':scope > .dc-closing-empty')?.remove();
+      const rows=[...list.children].filter(el=>el.classList?.contains('company-closing-row'));
+      if(!rows.length)return;
+      const paid=rows.filter(isPaidRow);
+      const open=rows.filter(r=>!isPaidRow(r));
+      if(!open.length){
+        const empty=document.createElement('div');
+        empty.className='dc-closing-empty';
+        empty.textContent='Nenhuma empresa com saldo a receber neste período.';
+        list.insertBefore(empty,list.firstChild);
+      }
+      if(paid.length){
+        const details=document.createElement('details');
+        details.className='dc-closing-paid-group';
+        details.innerHTML='<summary><span class="dc-paid-summary-copy"><span>✓ Empresas em dia · '+paid.length+'</span><small>Toque para ver os períodos quitados</small></span><b>⌄</b></summary><div class="dc-closing-paid-body"></div>';
+        const body=details.querySelector('.dc-closing-paid-body');
+        paid.forEach(row=>body.append(row));
+        list.append(details);
+      }
+    }finally{
+      organizing=false;
+    }
+  }
+  function scheduleOrganize(){
+    clearTimeout(pendingOrganize);
+    pendingOrganize=setTimeout(organizeClosing,35);
+  }
+
+  document.addEventListener('click',event=>{
+    const btn=event.target.closest('#company-closing-list button');
+    if(!btn||!/marcar como pago/i.test(btn.textContent||''))return;
+    const row=btn.closest('.company-closing-row');
+    if(!row)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    openClosingPayment(row);
+  },true);
+
+  document.addEventListener('submit',event=>{
+    const form=event.target.closest?.('#payment-form');
+    if(!form)return;
+    installPaymentMethod();
+    const method=$('#payment-method');
+    if(!method?.value){
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      method?.reportValidity?.();
+      return;
+    }
+    const label=method.options[method.selectedIndex]?.textContent||method.value;
+    const note=$('#payment-note');
+    if(note){
+      const clean=String(note.value||'').replace(/^Forma de pagamento:\s*[^·]+(?:·\s*)?/i,'').trim();
+      note.value='Forma de pagamento: '+label+(clean?' · '+clean:'');
+    }
+    if(form.dataset.fromClosing==='1'){
+      setTimeout(()=>{
+        form.dataset.fromClosing='';
+        scheduleOrganize();
+      },250);
+    }
+  },true);
+
+  document.addEventListener('click',event=>{
+    if(event.target.closest('#cancel-payment')){
+      const form=$('#payment-form');
+      if(form){form.dataset.fromClosing='';form.dataset.closingCompany='';form.dataset.closingPeriod='';}
+    }
+  },true);
+
+  function start(){
+    installPaymentMethod();
+    scheduleOrganize();
+    const list=$('#company-closing-list');
+    if(list){
+      new MutationObserver(()=>scheduleOrganize()).observe(list,{childList:true,subtree:false});
+    }
+    const period=$('#company-closing-period');
+    period?.addEventListener('change',()=>setTimeout(scheduleOrganize,80));
+    window.addEventListener('drivecash:storage',()=>setTimeout(scheduleOrganize,100));
+    window.addEventListener('drivecash:restore-complete',()=>setTimeout(scheduleOrganize,100));
+    setTimeout(scheduleOrganize,400);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
+})();
+<\/script>`;
+
+    html=html.replace('</body>',patch+'\n</body>');
+    document.open();
+    document.write(html);
+    document.close();
+  }catch(err){
+    document.getElementById('loader').innerHTML='<div><strong>Não foi possível carregar o DriveCash</strong><span>Recarregue a página. Nenhum dado foi apagado.</span></div>';
+    console.error('DriveCash v1.18.1 loader',err);
+  }
+})();
+</script>
+</body>
+</html>
