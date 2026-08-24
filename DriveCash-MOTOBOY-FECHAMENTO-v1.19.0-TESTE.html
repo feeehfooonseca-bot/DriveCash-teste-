@@ -1,0 +1,978 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DriveCash — teste v1.19.0</title>
+<style>
+html,body{margin:0;min-height:100%;background:#050807;color:#f4f7f5;font-family:Inter,system-ui,sans-serif}
+#loader{min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center}
+#loader strong{display:block;color:#03ca8a;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div id="loader"><div><strong>DriveCash · TESTE</strong><span>Carregando v1.19.0…</span></div></div>
+<script>
+(async()=>{
+  const BASE='DriveCash-MOTOBOY-FECHAMENTO-EMPRESA-TESTE.html?v=base-1180';
+  try{
+    const response=await fetch(BASE,{cache:'no-store'});
+    if(!response.ok) throw new Error('HTTP '+response.status);
+    let html=await response.text();
+    html=html.replace(
+      'v1.18.0-cloud-test-fechamento-empresa-push-pro',
+      'v1.19.0-cloud-test-periodicidade-cobranca'
+    );
+
+    const patch=String.raw`
+<style id="dc-closing-v1190-style">
+.dc-payment-method-field{margin-top:0}
+
+/* Fechamento: o fluxo antigo "Marcar como pago" fica definitivamente oculto. */
+#company-closing-list .company-closing-row > .company-closing-actions,
+#company-closing-list .company-closing-row .company-closing-actions{display:none!important}
+
+/* Cards compactos: empresa + total em aberto. */
+#company-closing-list .company-closing-row.dc-closing-collapsible{
+  padding:0;
+  gap:0;
+  overflow:hidden;
+}
+.dc-closing-compact-head{
+  width:100%;
+  border:0;
+  margin:0;
+  padding:14px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto 28px;
+  align-items:center;
+  gap:10px;
+  text-align:left;
+  background:transparent;
+  color:var(--text);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.dc-closing-compact-company{min-width:0;display:grid;gap:3px}
+.dc-closing-compact-company strong{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:.88rem;
+}
+.dc-closing-compact-company small{
+  color:var(--muted);
+  font-size:.61rem;
+}
+.dc-closing-compact-value{
+  display:grid;
+  justify-items:end;
+  gap:3px;
+  white-space:nowrap;
+}
+.dc-closing-compact-value small{
+  color:var(--muted);
+  font-size:.5rem;
+  font-weight:850;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.dc-closing-compact-value strong{
+  font-size:.85rem;
+  color:var(--red);
+}
+.company-closing-row.is-paid .dc-closing-compact-value strong,
+.dc-closing-paid-body .dc-closing-compact-value strong{color:var(--green)}
+.dc-closing-compact-chevron{
+  width:28px;
+  height:28px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  background:rgba(255,255,255,.035);
+  color:var(--muted);
+  font-size:1rem;
+  transition:transform .16s ease;
+}
+.company-closing-row.dc-closing-expanded .dc-closing-compact-chevron{transform:rotate(180deg)}
+.company-closing-row.dc-closing-collapsible:not(.dc-closing-expanded) > :not(.dc-closing-compact-head){
+  display:none!important;
+}
+.company-closing-row.dc-closing-collapsible.dc-closing-expanded{
+  padding-bottom:14px;
+  gap:12px;
+}
+.company-closing-row.dc-closing-collapsible.dc-closing-expanded > :not(.dc-closing-compact-head){
+  margin-left:14px;
+  margin-right:14px;
+}
+.company-closing-row.dc-closing-collapsible.dc-closing-expanded > .company-closing-head{
+  padding-top:2px;
+}
+.dc-closing-compact-head:active{background:rgba(255,255,255,.018)}
+
+/* Grupo de empresas quitadas. */
+.dc-closing-paid-group{
+  margin-top:12px;
+  border:1px solid rgba(37,226,138,.15);
+  border-radius:16px;
+  background:rgba(37,226,138,.025);
+  overflow:hidden
+}
+.dc-closing-paid-group>summary{
+  list-style:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:13px 14px;
+  color:var(--green);
+  font-size:.72rem;
+  font-weight:850;
+  user-select:none
+}
+.dc-closing-paid-group>summary::-webkit-details-marker{display:none}
+.dc-closing-paid-group>summary .dc-paid-summary-copy{display:grid;gap:2px}
+.dc-closing-paid-group>summary small{color:var(--muted);font-size:.58rem;font-weight:650}
+.dc-closing-paid-group>summary b{
+  width:28px;height:28px;display:grid;place-items:center;border-radius:999px;
+  background:rgba(37,226,138,.09);font-size:1rem;transition:transform .16s ease
+}
+.dc-closing-paid-group[open]>summary b{transform:rotate(180deg)}
+.dc-closing-paid-body{display:grid;gap:10px;padding:0 10px 10px;border-top:1px solid rgba(255,255,255,.05)}
+.dc-closing-paid-body .company-closing-row{margin-top:10px}
+.dc-closing-empty{
+  padding:12px 13px;border:1px dashed var(--border);border-radius:13px;
+  color:var(--muted);font-size:.68rem;line-height:1.45;background:rgba(255,255,255,.015)
+}
+.dc-closing-payment-hint{
+  margin:-2px 0 12px;padding:9px 10px;border-radius:11px;
+  border:1px solid rgba(37,226,138,.14);background:rgba(37,226,138,.035);
+  color:var(--muted);font-size:.62rem;line-height:1.4
+}
+
+.dc-company-billing-box{
+  margin-top:14px;
+  padding:13px;
+  border:1px solid rgba(37,226,138,.16);
+  border-radius:14px;
+  background:rgba(37,226,138,.025);
+}
+.dc-company-billing-box .dc-billing-title{
+  margin-bottom:10px;
+  color:var(--green);
+  font-size:.68rem;
+  font-weight:850;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.dc-company-billing-box .dc-billing-help{
+  display:block;
+  margin-top:7px;
+  color:var(--muted);
+  font-size:.58rem;
+  line-height:1.45;
+}
+
+.dc-billing-frequency-extra.hidden{display:none!important}
+.dc-billing-frequency-summary{
+  margin-top:8px;
+  padding:9px 10px;
+  border-radius:11px;
+  border:1px solid rgba(255,255,255,.06);
+  background:rgba(0,0,0,.12);
+  color:var(--muted);
+  font-size:.58rem;
+  line-height:1.45;
+}
+
+.dc-company-billing-status{
+  margin-top:8px;
+  min-height:16px;
+  color:var(--green);
+  font-size:.58rem;
+  font-weight:700;
+}
+
+
+.dc-charge-due-box{
+  margin:12px 0 14px;
+  padding:12px 13px;
+  border:1px solid rgba(37,226,138,.18);
+  border-radius:14px;
+  background:rgba(37,226,138,.035);
+  display:grid;
+  gap:9px;
+}
+.dc-charge-due-box .dc-due-title{
+  color:var(--green);
+  font-size:.65rem;
+  font-weight:900;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.dc-charge-due-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+.dc-charge-due-item{
+  padding:10px;
+  border-radius:11px;
+  background:rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.05);
+  display:grid;
+  gap:3px;
+}
+.dc-charge-due-item small{
+  color:var(--muted);
+  font-size:.52rem;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.dc-charge-due-item strong{
+  font-size:.74rem;
+}
+.dc-charge-due-note{
+  color:var(--muted);
+  font-size:.58rem;
+  line-height:1.45;
+}
+@media(max-width:420px){
+  .dc-charge-due-grid{grid-template-columns:1fr 1fr}
+}
+
+@media(max-width:420px){
+  .dc-closing-compact-head{grid-template-columns:minmax(0,1fr) auto 26px;padding:13px 12px;gap:8px}
+  .dc-closing-compact-company strong{font-size:.82rem}
+  .dc-closing-compact-value strong{font-size:.8rem}
+}
+</style>
+
+<script id="dc-closing-v1190-script">
+(()=>{
+  'use strict';
+  const $=s=>document.querySelector(s);
+  const methods=[
+    ['pix','PIX'],
+    ['dinheiro','Dinheiro'],
+    ['transferencia','Transferência bancária'],
+    ['cartao','Cartão'],
+    ['outro','Outro']
+  ];
+  let organizing=false, pendingOrganize=0, closingObserver=null;
+
+  function parseBRL(text){
+    const m=String(text||'').match(/R\$\s*([\d.]+(?:,\d{1,2})?)/i);
+    if(!m)return 0;
+    return Number(m[1].replace(/\./g,'').replace(',','.'))||0;
+  }
+
+  function formatBRL(value){
+    return Number(value||0).toLocaleString('pt-BR',{
+      style:'currency',
+      currency:'BRL'
+    });
+  }
+
+  function closingOpenAmount(row){
+    const chips=[...row.querySelectorAll('.company-closing-chip')];
+    const openChip=chips.find(el=>/total em aberto/i.test(el.textContent||''));
+    if(openChip)return parseBRL(openChip.textContent);
+    const total=row.querySelector('.company-closing-total strong');
+    return parseBRL(total?.textContent||'');
+  }
+
+  function installPaymentMethod(){
+    const form=$('#payment-form');
+    if(!form||$('#payment-method'))return;
+    const note=$('#payment-note')?.closest('.field');
+    if(!note)return;
+
+    const field=document.createElement('div');
+    field.className='field dc-payment-method-field';
+    field.innerHTML='<label for="payment-method">Forma de pagamento</label><select id="payment-method" required><option value="">Selecionar...</option>'+
+      methods.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('')+
+      '</select>';
+    note.before(field);
+
+    const hint=document.createElement('div');
+    hint.className='dc-closing-payment-hint';
+    hint.textContent='Escolha como o pagamento foi recebido. A forma selecionada ficará registrada junto ao recebimento.';
+    field.after(hint);
+  }
+
+  function isPaidRow(row){
+    if(row.classList.contains('is-paid'))return true;
+    if(row.querySelector('.company-closing-paid-badge'))return true;
+    return closingOpenAmount(row)<=0.0001;
+  }
+
+  function removeRedundantPaidButtons(rows){
+    rows.forEach(row=>{
+      [...row.querySelectorAll('button,a,[role="button"],input[type="button"],input[type="submit"]')].forEach(btn=>{
+        if(btn.classList.contains('dc-closing-compact-head'))return;
+        const label=(btn.textContent||btn.value||btn.getAttribute?.('aria-label')||'').trim();
+        if(/marcar\s+como\s+pago/i.test(label))btn.remove();
+      });
+    });
+  }
+
+  function compactRow(row){
+    if(!row)return;
+
+    const name=(row.querySelector('.company-closing-head h3')?.textContent||'Empresa').trim();
+    const period=(row.querySelector('.company-closing-head p')?.textContent||'').trim();
+    const open=closingOpenAmount(row);
+
+    let head=row.querySelector(':scope > .dc-closing-compact-head');
+    if(!head){
+      head=document.createElement('button');
+      head.type='button';
+      head.className='dc-closing-compact-head';
+      head.setAttribute('aria-expanded','false');
+      head.innerHTML=
+        '<span class="dc-closing-compact-company"><strong></strong><small></small></span>'+
+        '<span class="dc-closing-compact-value"><small>Total em aberto</small><strong></strong></span>'+
+        '<span class="dc-closing-compact-chevron">⌄</span>';
+      row.prepend(head);
+    }
+
+    const n=head.querySelector('.dc-closing-compact-company strong');
+    const p=head.querySelector('.dc-closing-compact-company small');
+    const v=head.querySelector('.dc-closing-compact-value strong');
+    if(n && n.textContent!==name)n.textContent=name;
+    if(p && p.textContent!==period)p.textContent=period;
+    const valueText=formatBRL(open);
+    if(v && v.textContent!==valueText)v.textContent=valueText;
+
+    row.classList.add('dc-closing-collapsible');
+    head.setAttribute('aria-expanded',row.classList.contains('dc-closing-expanded')?'true':'false');
+  }
+
+  function organizeClosing(){
+    if(organizing)return;
+    const list=$('#company-closing-list');
+    if(!list)return;
+    organizing=true;
+    closingObserver?.disconnect();
+
+    try{
+      const old=list.querySelector(':scope > .dc-closing-paid-group');
+      if(old){
+        const body=old.querySelector('.dc-closing-paid-body');
+        if(body)[...body.children].forEach(el=>list.insertBefore(el,old));
+        old.remove();
+      }
+
+      list.querySelector(':scope > .dc-closing-empty')?.remove();
+
+      const rows=[...list.children].filter(el=>el.classList?.contains('company-closing-row'));
+      if(!rows.length)return;
+
+      removeRedundantPaidButtons(rows);
+      rows.forEach(compactRow);
+
+      const paid=rows.filter(isPaidRow);
+      const open=rows.filter(r=>!isPaidRow(r));
+
+      if(!open.length){
+        const empty=document.createElement('div');
+        empty.className='dc-closing-empty';
+        empty.textContent='Nenhuma empresa com saldo a receber neste período.';
+        list.insertBefore(empty,list.firstChild);
+      }
+
+      if(paid.length){
+        const details=document.createElement('details');
+        details.className='dc-closing-paid-group';
+        details.innerHTML=
+          '<summary><span class="dc-paid-summary-copy">'+
+          '<span>✓ Empresas em dia · '+paid.length+'</span>'+
+          '<small>Toque para ver os períodos quitados</small>'+
+          '</span><b>⌄</b></summary><div class="dc-closing-paid-body"></div>';
+
+        const body=details.querySelector('.dc-closing-paid-body');
+        paid.forEach(row=>body.append(row));
+        list.append(details);
+      }
+    }finally{
+      organizing=false;
+      if(closingObserver && list){
+        closingObserver.observe(list,{
+          childList:true,
+          subtree:true,
+          characterData:true
+        });
+      }
+    }
+  }
+
+  function scheduleOrganize(){
+    clearTimeout(pendingOrganize);
+    pendingOrganize=setTimeout(organizeClosing,35);
+  }
+
+  document.addEventListener('click',event=>{
+    const head=event.target.closest?.('.dc-closing-compact-head');
+    if(head){
+      const row=head.closest('.company-closing-row');
+      if(!row)return;
+      const expanded=row.classList.toggle('dc-closing-expanded');
+      head.setAttribute('aria-expanded',expanded?'true':'false');
+      return;
+    }
+
+    const oldButton=event.target.closest?.('#company-closing-list button,#company-closing-list a,#company-closing-list [role="button"]');
+    if(!oldButton)return;
+    const label=(oldButton.textContent||oldButton.value||oldButton.getAttribute?.('aria-label')||'').trim();
+    if(!/marcar\s+como\s+pago/i.test(label))return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    oldButton.remove();
+  },true);
+
+  document.addEventListener('submit',event=>{
+    const form=event.target.closest?.('#payment-form');
+    if(!form)return;
+
+    installPaymentMethod();
+    const method=$('#payment-method');
+    if(!method?.value){
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      method?.reportValidity?.();
+      return;
+    }
+
+    const label=method.options[method.selectedIndex]?.textContent||method.value;
+    const note=$('#payment-note');
+    if(note){
+      const clean=String(note.value||'').replace(/^Forma de pagamento:\s*[^·]+(?:·\s*)?/i,'').trim();
+      note.value='Forma de pagamento: '+label+(clean?' · '+clean:'');
+    }
+
+    setTimeout(scheduleOrganize,250);
+  },true);
+
+
+  const BILLING_TERMS_KEY='dc_company_billing_terms_v1';
+  let billingOriginalCompanyName='';
+
+  function normalizeCompanyKey(name){
+    return String(name||'').trim().toLocaleLowerCase('pt-BR');
+  }
+
+  function readBillingTerms(){
+    try{
+      const raw=localStorage.getItem(BILLING_TERMS_KEY);
+      const parsed=raw?JSON.parse(raw):{};
+      return parsed && typeof parsed==='object' && !Array.isArray(parsed) ? parsed : {};
+    }catch(e){
+      return {};
+    }
+  }
+
+  function writeBillingTerms(map){
+    try{
+      localStorage.setItem(BILLING_TERMS_KEY,JSON.stringify(map||{}));
+      window.dispatchEvent(new CustomEvent('drivecash:billing-terms-updated'));
+      return true;
+    }catch(e){
+      console.warn('DriveCash: não foi possível salvar condição de cobrança',e);
+      return false;
+    }
+  }
+
+
+  function updateBillingPeriodicityMode(){
+    const frequency=$('#company-billing-frequency');
+    const weekdayField=$('#dc-billing-weekday-field');
+    const weekday=$('#company-billing-weekday');
+    const summary=$('#company-billing-frequency-summary');
+    if(!frequency||!weekdayField||!summary)return;
+
+    if(frequency.value==='weekly'){
+      weekdayField.classList.remove('hidden');
+      const label=weekday?.options?.[weekday.selectedIndex]?.textContent||'dia escolhido';
+      summary.textContent='Fechamento semanal em '+label+'.';
+    }else if(frequency.value==='biweekly'){
+      weekdayField.classList.add('hidden');
+      summary.textContent='1ª quinzena: dias 1 a 15 · 2ª quinzena: dia 16 até o último dia do mês.';
+    }else{
+      frequency.value='monthly';
+      weekdayField.classList.add('hidden');
+      summary.textContent='Fechamento mensal.';
+    }
+  }
+
+  function updateBillingFieldMode(){
+    const rule=$('#company-billing-rule');
+    const value=$('#company-billing-value');
+    const label=$('#company-billing-value-label');
+    const help=$('#company-billing-help');
+    if(!rule||!value||!label||!help)return;
+
+    if(rule.value==='after_closing'){
+      label.textContent='Prazo após o fechamento';
+      value.min='0';
+      value.max='90';
+      value.placeholder='Ex.: 7';
+      help.textContent='Ex.: 7 = vencimento 7 dias após o fechamento da competência.';
+    }else{
+      rule.value='fixed_day';
+      label.textContent='Dia do pagamento';
+      value.min='1';
+      value.max='31';
+      value.placeholder='Ex.: 10';
+      help.textContent='Ex.: 10 = vencimento no dia 10 de cada mês.';
+    }
+  }
+
+  function installBillingFields(){
+    const form=$('#company-form');
+    if(!form||$('#company-billing-rule'))return;
+
+    const actions=form.querySelector('.form-actions');
+    if(!actions)return;
+
+    const box=document.createElement('div');
+    box.className='dc-company-billing-box';
+    box.innerHTML=
+      '<div class="dc-billing-title">Cobrança da empresa</div>'+
+      '<div class="two-cols">'+
+        '<div class="field">'+
+          '<label for="company-billing-frequency">Periodicidade de pagamento</label>'+
+          '<select id="company-billing-frequency">'+
+            '<option value="weekly">Semanal</option>'+
+            '<option value="biweekly">Quinzenal</option>'+
+            '<option value="monthly" selected>Mensal</option>'+
+          '</select>'+
+        '</div>'+
+        '<div id="dc-billing-weekday-field" class="field dc-billing-frequency-extra hidden">'+
+          '<label for="company-billing-weekday">Fechamento semanal</label>'+
+          '<select id="company-billing-weekday">'+
+            '<option value="1">Segunda-feira</option>'+
+            '<option value="2">Terça-feira</option>'+
+            '<option value="3">Quarta-feira</option>'+
+            '<option value="4">Quinta-feira</option>'+
+            '<option value="5" selected>Sexta-feira</option>'+
+            '<option value="6">Sábado</option>'+
+            '<option value="0">Domingo</option>'+
+          '</select>'+
+        '</div>'+
+      '</div>'+
+      '<div id="company-billing-frequency-summary" class="dc-billing-frequency-summary">Fechamento mensal.</div>'+
+      '<div class="two-cols" style="margin-top:10px">'+
+        '<div class="field">'+
+          '<label for="company-billing-rule">Regra de vencimento</label>'+
+          '<select id="company-billing-rule">'+
+            '<option value="fixed_day">Dia fixo do mês</option>'+
+            '<option value="after_closing">Prazo após fechamento</option>'+
+          '</select>'+
+        '</div>'+
+        '<div class="field">'+
+          '<label id="company-billing-value-label" for="company-billing-value">Dia do pagamento</label>'+
+          '<input id="company-billing-value" type="number" min="1" max="31" step="1" inputmode="numeric" placeholder="Ex.: 10">'+
+        '</div>'+
+      '</div>'+
+      '<small id="company-billing-help" class="dc-billing-help">Ex.: 10 = vencimento no dia 10 de cada mês.</small>'+
+      '<div id="company-billing-status" class="dc-company-billing-status"></div>';
+
+    actions.before(box);
+    $('#company-billing-frequency')?.addEventListener('change',updateBillingPeriodicityMode);
+    $('#company-billing-weekday')?.addEventListener('change',updateBillingPeriodicityMode);
+    $('#company-billing-rule')?.addEventListener('change',updateBillingFieldMode);
+    updateBillingPeriodicityMode();
+    updateBillingFieldMode();
+  }
+
+  function clearBillingFields(){
+    installBillingFields();
+    const frequency=$('#company-billing-frequency');
+    const weekday=$('#company-billing-weekday');
+    const rule=$('#company-billing-rule');
+    const value=$('#company-billing-value');
+    const status=$('#company-billing-status');
+    if(frequency)frequency.value='monthly';
+    if(weekday)weekday.value='5';
+    if(rule)rule.value='fixed_day';
+    if(value)value.value='';
+    if(status)status.textContent='';
+    updateBillingPeriodicityMode();
+    updateBillingFieldMode();
+  }
+
+  function loadBillingForCompany(name){
+    installBillingFields();
+    const key=normalizeCompanyKey(name);
+    const saved=key?readBillingTerms()[key]:null;
+    const frequency=$('#company-billing-frequency');
+    const weekday=$('#company-billing-weekday');
+    const rule=$('#company-billing-rule');
+    const value=$('#company-billing-value');
+    const status=$('#company-billing-status');
+
+    if(saved){
+      if(frequency){
+        frequency.value=
+          saved.frequency==='weekly' ? 'weekly' :
+          saved.frequency==='biweekly' ? 'biweekly' : 'monthly';
+      }
+      if(weekday)weekday.value=String(saved.weekday ?? 5);
+      updateBillingPeriodicityMode();
+      if(rule)rule.value=saved.rule==='after_closing'?'after_closing':'fixed_day';
+      updateBillingFieldMode();
+      if(value)value.value=String(saved.value??'');
+      if(status)status.textContent='Condição de cobrança cadastrada.';
+    }else{
+      clearBillingFields();
+    }
+  }
+
+  function refreshBillingFromVisibleForm(){
+    const form=$('#company-form');
+    if(!form||form.classList.contains('hidden'))return;
+    const name=String($('#company-name')?.value||'').trim();
+
+    if(name){
+      billingOriginalCompanyName=name;
+      loadBillingForCompany(name);
+    }else{
+      billingOriginalCompanyName='';
+      clearBillingFields();
+    }
+  }
+
+  function saveBillingFromCompanyForm(){
+    installBillingFields();
+    const name=String($('#company-name')?.value||'').trim();
+    const frequency=$('#company-billing-frequency')?.value||'monthly';
+    const weekday=Number($('#company-billing-weekday')?.value??5);
+    const rule=$('#company-billing-rule')?.value||'fixed_day';
+    const rawValue=Number($('#company-billing-value')?.value||0);
+    const status=$('#company-billing-status');
+
+    if(!name)return true;
+
+    if(!Number.isFinite(rawValue) || rawValue<=0){
+      if(status)status.textContent='Informe o dia ou prazo de pagamento.';
+      $('#company-billing-value')?.focus();
+      return false;
+    }
+
+    if(rule==='fixed_day' && (rawValue<1 || rawValue>31)){
+      if(status)status.textContent='O dia do mês deve ficar entre 1 e 31.';
+      $('#company-billing-value')?.focus();
+      return false;
+    }
+
+    if(rule==='after_closing' && (rawValue<1 || rawValue>90)){
+      if(status)status.textContent='O prazo deve ficar entre 1 e 90 dias.';
+      $('#company-billing-value')?.focus();
+      return false;
+    }
+
+    const map=readBillingTerms();
+    const newKey=normalizeCompanyKey(name);
+    const oldKey=normalizeCompanyKey(billingOriginalCompanyName);
+
+    if(oldKey && oldKey!==newKey)delete map[oldKey];
+
+    map[newKey]={
+      companyName:name,
+      frequency:
+        frequency==='weekly' ? 'weekly' :
+        frequency==='biweekly' ? 'biweekly' : 'monthly',
+      weekday:frequency==='weekly' ? weekday : null,
+      rule:rule==='after_closing'?'after_closing':'fixed_day',
+      value:Math.trunc(rawValue),
+      updatedAt:new Date().toISOString()
+    };
+
+    const ok=writeBillingTerms(map);
+    if(status)status.textContent=ok?'Condição de cobrança salva.':'Não foi possível salvar a condição.';
+    if(ok)billingOriginalCompanyName=name;
+    return ok;
+  }
+
+  document.addEventListener('submit',event=>{
+    const form=event.target.closest?.('#company-form');
+    if(!form)return;
+
+    if(!saveBillingFromCompanyForm()){
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  },true);
+
+  document.addEventListener('click',event=>{
+    const newBtn=event.target.closest?.('#new-company-button');
+    if(newBtn){
+      billingOriginalCompanyName='';
+      setTimeout(clearBillingFields,40);
+      return;
+    }
+
+    if(event.target.closest?.('#cancel-company')){
+      billingOriginalCompanyName='';
+      return;
+    }
+
+    /* Ao abrir uma empresa existente, o app original preenche o nome.
+       A leitura é feita depois para não interferir no fluxo existente. */
+    if(event.target.closest?.('#companies-list button,#companies-list a,#companies-list [role="button"]')){
+      setTimeout(refreshBillingFromVisibleForm,80);
+      setTimeout(refreshBillingFromVisibleForm,220);
+    }
+  },true);
+
+  function observeCompanyForm(){
+    installBillingFields();
+    const form=$('#company-form');
+    if(!form)return;
+
+    new MutationObserver(()=>{
+      if(!form.classList.contains('hidden')){
+        setTimeout(refreshBillingFromVisibleForm,60);
+      }
+    }).observe(form,{attributes:true,attributeFilter:['class']});
+  }
+
+
+
+  const CLOSING_DATES_KEY='dc_company_closing_dates_v1';
+
+  function localISODate(date){
+    const y=date.getFullYear();
+    const m=String(date.getMonth()+1).padStart(2,'0');
+    const d=String(date.getDate()).padStart(2,'0');
+    return y+'-'+m+'-'+d;
+  }
+
+  function parseISODateLocal(iso){
+    const parts=String(iso||'').split('-').map(Number);
+    if(parts.length!==3 || parts.some(n=>!Number.isFinite(n)))return null;
+    return new Date(parts[0],parts[1]-1,parts[2],12,0,0,0);
+  }
+
+  function addDaysISO(iso,days){
+    const dt=parseISODateLocal(iso);
+    if(!dt)return '';
+    dt.setDate(dt.getDate()+Number(days||0));
+    return localISODate(dt);
+  }
+
+  function formatDateBR(iso){
+    const dt=parseISODateLocal(iso);
+    if(!dt)return '—';
+    return new Intl.DateTimeFormat('pt-BR').format(dt);
+  }
+
+  function readClosingDates(){
+    try{
+      const raw=localStorage.getItem(CLOSING_DATES_KEY);
+      const parsed=raw?JSON.parse(raw):{};
+      return parsed && typeof parsed==='object' && !Array.isArray(parsed) ? parsed : {};
+    }catch(e){
+      return {};
+    }
+  }
+
+  function writeClosingDates(map){
+    try{
+      localStorage.setItem(CLOSING_DATES_KEY,JSON.stringify(map||{}));
+      window.dispatchEvent(new CustomEvent('drivecash:closing-dates-updated'));
+      return true;
+    }catch(e){
+      console.warn('DriveCash: não foi possível salvar data do fechamento',e);
+      return false;
+    }
+  }
+
+  function chargePeriod(){
+    const start=String($('#charge-start')?.value||'');
+    if(/^\d{4}-\d{2}-\d{2}$/.test(start))return start.slice(0,7);
+    const period=String($('#company-closing-period')?.value||'');
+    if(/^\d{4}-\d{2}$/.test(period))return period;
+    const now=new Date();
+    return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  }
+
+  function ensureChargeDueBox(){
+    const dialog=$('#charge-dialog');
+    if(!dialog)return null;
+
+    let box=$('#dc-charge-due-box');
+    if(box)return box;
+
+    const grid=dialog.querySelector('.charge-breakdown-grid');
+    if(!grid)return null;
+
+    box=document.createElement('div');
+    box.id='dc-charge-due-box';
+    box.className='dc-charge-due-box';
+    grid.before(box);
+    return box;
+  }
+
+  function renderClosingDue(){
+    const dialog=$('#charge-dialog');
+    if(!dialog || !dialog.hasAttribute('open'))return;
+
+    const box=ensureChargeDueBox();
+    if(!box)return;
+
+    const company=String($('#charge-company-name')?.textContent||'').trim();
+    const companyKey=normalizeCompanyKey(company);
+    if(!companyKey || /^empresa$/i.test(company)){
+      box.innerHTML='';
+      box.style.display='none';
+      return;
+    }
+
+    const term=readBillingTerms()[companyKey];
+    if(!term){
+      box.style.display='grid';
+      box.innerHTML=
+        '<div class="dc-due-title">Fechamento e vencimento</div>'+
+        '<div class="dc-charge-due-note">Esta empresa ainda não possui regra de vencimento cadastrada.</div>';
+      return;
+    }
+
+    const period=chargePeriod();
+    const recordKey=companyKey+'|'+period;
+    const map=readClosingDates();
+    let record=map[recordKey];
+
+    /* Opção B: a data do fechamento é a data em que a cobrança detalhada
+       é gerada pela primeira vez para aquela empresa e competência. */
+    if(!record){
+      const closedAt=localISODate(new Date());
+      let dueAt='';
+
+      if(term.rule==='after_closing'){
+        dueAt=addDaysISO(closedAt,Number(term.value||0));
+      }else{
+        /* Para dia fixo, usa a próxima ocorrência do dia cadastrado
+           a partir da data do fechamento. */
+        const base=parseISODateLocal(closedAt);
+        const requested=Math.max(1,Math.min(31,Number(term.value||1)));
+        let y=base.getFullYear(), m=base.getMonth();
+        const makeDate=(year,month,day)=>{
+          const last=new Date(year,month+1,0,12).getDate();
+          return new Date(year,month,Math.min(day,last),12);
+        };
+        let candidate=makeDate(y,m,requested);
+        if(candidate < base){
+          m+=1;
+          if(m>11){m=0;y+=1;}
+          candidate=makeDate(y,m,requested);
+        }
+        dueAt=localISODate(candidate);
+      }
+
+      record={
+        companyName:company,
+        period,
+        closedAt,
+        dueAt,
+        rule:term.rule,
+        value:Number(term.value||0),
+        createdAt:new Date().toISOString()
+      };
+      map[recordKey]=record;
+      writeClosingDates(map);
+    }
+
+    const ruleText=record.rule==='after_closing'
+      ? Number(record.value||0)+' dia(s) após o fechamento'
+      : 'dia '+Number(record.value||0)+' do mês';
+
+    const liveTerm=readBillingTerms()[companyKey]||term;
+    const weekdayNames={
+      0:'Domingo',
+      1:'Segunda-feira',
+      2:'Terça-feira',
+      3:'Quarta-feira',
+      4:'Quinta-feira',
+      5:'Sexta-feira',
+      6:'Sábado'
+    };
+    const frequencyText=
+      liveTerm.frequency==='weekly'
+        ? 'Semanal · '+(weekdayNames[Number(liveTerm.weekday ?? 5)]||'dia definido')
+        : liveTerm.frequency==='biweekly'
+          ? 'Quinzenal · 1–15 / 16–fim do mês'
+          : 'Mensal';
+
+    box.style.display='grid';
+    box.innerHTML=
+      '<div class="dc-due-title">Fechamento e vencimento</div>'+
+      '<div class="dc-charge-due-grid">'+
+        '<div class="dc-charge-due-item"><small>Fechamento</small><strong>'+formatDateBR(record.closedAt)+'</strong></div>'+
+        '<div class="dc-charge-due-item"><small>Vencimento</small><strong>'+formatDateBR(record.dueAt)+'</strong></div>'+
+      '</div>'+
+      '<div class="dc-charge-due-note">Periodicidade: '+frequencyText+' · Regra aplicada: '+ruleText+'. A data do fechamento fica preservada para esta competência.</div>';
+  }
+
+  function observeChargeDialog(){
+    const dialog=$('#charge-dialog');
+    if(!dialog)return;
+
+    new MutationObserver(()=>{
+      if(dialog.hasAttribute('open')){
+        setTimeout(renderClosingDue,40);
+        setTimeout(renderClosingDue,160);
+      }
+    }).observe(dialog,{attributes:true,attributeFilter:['open']});
+
+    $('#charge-start')?.addEventListener('change',()=>setTimeout(renderClosingDue,40));
+    $('#charge-end')?.addEventListener('change',()=>setTimeout(renderClosingDue,40));
+  }
+
+
+  function start(){
+    installPaymentMethod();
+    installBillingFields();
+    observeCompanyForm();
+    observeChargeDialog();
+    scheduleOrganize();
+
+    const list=$('#company-closing-list');
+    if(list){
+      closingObserver=new MutationObserver(()=>scheduleOrganize());
+      closingObserver.observe(list,{
+        childList:true,
+        subtree:true,
+        characterData:true
+      });
+    }
+
+    $('#company-closing-period')?.addEventListener('change',()=>setTimeout(scheduleOrganize,80));
+    window.addEventListener('drivecash:storage',()=>setTimeout(scheduleOrganize,100));
+    window.addEventListener('drivecash:restore-complete',()=>setTimeout(scheduleOrganize,100));
+    setTimeout(scheduleOrganize,400);
+    [80,180,350,700,1200,2200,4000].forEach(ms=>setTimeout(scheduleOrganize,ms));
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+})();` + '</scr' + 'ipt>';
+
+    html=html.replace('</body>',patch+'\n</body>');
+    document.open();
+    document.write(html);
+    document.close();
+  }catch(err){
+    document.getElementById('loader').innerHTML=
+      '<div><strong>Não foi possível carregar o DriveCash</strong><span>Recarregue a página. Nenhum dado foi apagado.</span></div>';
+    console.error('DriveCash v1.19.0 loader',err);
+  }
+})();
+</script>
+</body>
+</html>
