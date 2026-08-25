@@ -1,4 +1,4 @@
-/* DriveCash — Firebase Cloud Messaging Service Worker — TESTE */
+/* DriveCash — Firebase Cloud Messaging Service Worker — TESTE v1.22.1 */
 importScripts('https://www.gstatic.com/firebasejs/12.9.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/12.9.0/firebase-messaging-compat.js');
 
@@ -15,7 +15,7 @@ firebase.initializeApp({
 const messaging=firebase.messaging();
 
 const FALLBACK_URL=
-'./DriveCash-TESTE-COMPLETO-NUVEM-INSIGHTS-PUSH-PRO.html?push=1#insights';
+'./DriveCash-CONSOLIDADO-v1.22.2-TESTE-COMPACTO.html?push=1#insights';
 
 messaging.onBackgroundMessage(payload=>{
   if(payload && payload.notification) return;
