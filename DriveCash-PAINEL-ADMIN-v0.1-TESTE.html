@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<title>DriveCash Admin v0.1 — Teste</title>
+<style>
+:root{
+  --bg:#0b0f14;--surface:#111821;--surface-2:#17212d;--border:#253241;
+  --text:#f4f7fb;--muted:#8491a3;--green:#25e28a;--gold:#f2c94c;
+  --red:#ff6363;--blue:#6da9ff;--shadow:0 18px 50px rgba(0,0,0,.28);
+  --radius:18px;--radius-sm:12px;--safe-bottom:max(14px,env(safe-area-inset-bottom));
+}
+*{box-sizing:border-box} html{background:var(--bg);scroll-behavior:smooth} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased} button,input,select{font:inherit} button{cursor:pointer} a{color:inherit}.hidden{display:none!important}
+.app{min-height:100vh}.sidebar{position:fixed;inset:0 auto 0 0;width:250px;background:#0d131b;border-right:1px solid var(--border);padding:20px 14px;display:flex;flex-direction:column;z-index:20}.brand{display:flex;align-items:center;gap:11px;padding:8px 10px 20px}.brand-mark{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,rgba(37,226,138,.2),rgba(37,226,138,.04));border:1px solid rgba(37,226,138,.28);font-weight:950;color:var(--green);letter-spacing:-.04em}.brand strong{display:block;font-size:1rem}.brand small{display:block;color:var(--muted);font-size:.68rem;margin-top:2px}.demo-badge{margin-left:auto;font-size:.56rem;font-weight:900;letter-spacing:.08em;color:var(--gold);border:1px solid rgba(242,201,76,.28);background:rgba(242,201,76,.08);padding:5px 7px;border-radius:999px}.nav{display:grid;gap:7px}.nav-btn{border:0;background:transparent;color:var(--muted);padding:11px 12px;border-radius:12px;text-align:left;display:flex;align-items:center;gap:10px;font-weight:750}.nav-btn .ico{width:22px;text-align:center}.nav-btn.active{background:var(--surface-2);color:var(--text);box-shadow:inset 3px 0 0 var(--green)}.nav-btn:hover{background:rgba(255,255,255,.035);color:var(--text)}.sidebar-foot{margin-top:auto;padding:12px 10px;color:var(--muted);font-size:.66rem;line-height:1.5}.sidebar-foot strong{color:var(--green)}
+.main{margin-left:250px;min-height:100vh;padding:24px 26px 40px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}.top-title small{display:block;color:var(--muted);font-size:.7rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase}.top-title h1{font-size:1.55rem;letter-spacing:-.03em;margin:3px 0 0}.top-actions{display:flex;align-items:center;gap:8px}.pill{font-size:.62rem;font-weight:850;color:var(--green);border:1px solid rgba(37,226,138,.24);background:rgba(37,226,138,.06);border-radius:999px;padding:7px 9px}.icon-btn{width:38px;height:38px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
+.notice{border:1px dashed rgba(242,201,76,.34);background:rgba(242,201,76,.055);border-radius:14px;padding:12px 14px;color:#eadb95;font-size:.72rem;line-height:1.45;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}.notice strong{color:var(--gold)}
+.page{display:none}.page.active{display:block}.hero{background:linear-gradient(145deg,var(--surface),var(--surface-2));border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px}.eyebrow{font-size:.65rem;font-weight:850;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}.hero h2{font-size:1.1rem;margin:5px 0 0}.hero-value{display:block;font-size:2rem;font-weight:900;margin-top:6px;letter-spacing:-.045em}.hero-side{text-align:right}.hero-side small{display:block;color:var(--muted);font-size:.66rem;margin-bottom:4px}.hero-side strong{font-size:1.05rem;color:var(--green)}
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;min-height:106px}.metric-card .label{color:var(--muted);font-size:.68rem;font-weight:800;display:flex;justify-content:space-between;gap:8px}.metric-card .value{font-size:1.65rem;font-weight:900;margin:10px 0 3px;letter-spacing:-.04em}.metric-card .sub{font-size:.66rem;color:var(--muted)}.dot{width:8px;height:8px;border-radius:50%;display:inline-block}.dot.green{background:var(--green)}.dot.gold{background:var(--gold)}.dot.red{background:var(--red)}.dot.blue{background:var(--blue)}
+.grid-2{display:grid;grid-template-columns:1.15fr .85fr;gap:12px}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}.card-head h3{font-size:.9rem;margin:0}.card-head small{color:var(--muted);font-size:.65rem}.row-list{display:grid;gap:8px}.activity{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--border)}.activity:first-child{border-top:0}.avatar{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--surface-2);font-size:.7rem;font-weight:900;color:var(--green);border:1px solid var(--border)}.activity strong{font-size:.73rem;display:block}.activity small{font-size:.62rem;color:var(--muted);display:block;margin-top:2px}.money{font-size:.72rem;font-weight:850}.money.green{color:var(--green)}.money.gold{color:var(--gold)}
+.progress-block{margin:12px 0}.progress-label{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:.66rem;margin-bottom:6px}.progress-label strong{color:var(--text)}.bar{height:9px;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;overflow:hidden}.bar>span{display:block;height:100%;border-radius:999px;background:var(--green)}.bar.gold>span{background:var(--gold)}.bar.blue>span{background:var(--blue)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.search{flex:1;min-width:220px;position:relative}.search input,.field input,.field select,.field textarea{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:11px 12px;outline:none}.search input{padding-left:36px}.search::before{content:'⌕';position:absolute;left:13px;top:50%;transform:translateY(-52%);color:var(--muted);font-size:1rem}.search input:focus,.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(37,226,138,.06)}.select{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:11px 10px}.btn{border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:12px;padding:10px 12px;font-weight:850;font-size:.72rem}.btn.primary{background:var(--green);border-color:var(--green);color:#07140d}.btn.gold{background:var(--gold);border-color:var(--gold);color:#161204}.btn.danger{color:var(--red);border-color:rgba(255,99,99,.3);background:rgba(255,99,99,.06)}.btn.ghost{background:transparent}.btn:active{transform:scale(.985)}
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:860px}.table th{background:var(--surface-2);color:var(--muted);font-size:.61rem;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:11px 12px}.table td{padding:12px;border-top:1px solid var(--border);font-size:.7rem;vertical-align:middle}.table tr:hover td{background:rgba(255,255,255,.015)}.client-cell{display:flex;gap:9px;align-items:center}.client-cell strong{display:block;font-size:.72rem}.client-cell small{display:block;color:var(--muted);margin-top:2px}.status{font-size:.57rem;font-weight:900;letter-spacing:.05em;border-radius:999px;padding:5px 8px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}.status.ativo{color:var(--green);border:1px solid rgba(37,226,138,.24);background:rgba(37,226,138,.07)}.status.teste{color:var(--blue);border:1px solid rgba(109,169,255,.25);background:rgba(109,169,255,.07)}.status.vencido,.status.bloqueado{color:var(--red);border:1px solid rgba(255,99,99,.26);background:rgba(255,99,99,.07)}.status.pendente{color:var(--gold);border:1px solid rgba(242,201,76,.27);background:rgba(242,201,76,.07)}.mini-actions{display:flex;gap:6px;white-space:nowrap}.mini-btn{border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:9px;padding:7px 8px;font-size:.61rem;font-weight:800}
+.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}.plan-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative}.plan-card.featured{border-color:rgba(37,226,138,.42);box-shadow:0 0 0 1px rgba(37,226,138,.06),var(--shadow)}.plan-card h3{margin:5px 0 2px;font-size:1rem}.plan-price{font-size:1.7rem;font-weight:950;letter-spacing:-.045em;margin:11px 0 2px}.plan-price small{font-size:.7rem;color:var(--muted);font-weight:700;letter-spacing:0}.plan-note{font-size:.66rem;color:var(--muted);line-height:1.5}.plan-badge{position:absolute;top:13px;right:13px;font-size:.55rem;font-weight:950;letter-spacing:.06em;padding:5px 7px;border-radius:999px;color:var(--green);background:rgba(37,226,138,.07);border:1px solid rgba(37,226,138,.25)}.strike{color:var(--muted);text-decoration:line-through;font-size:.72rem}.save{color:var(--green);font-size:.69rem;font-weight:850;margin-top:7px}.features{list-style:none;padding:0;margin:13px 0 0;display:grid;gap:7px}.features li{font-size:.68rem;color:var(--muted)}.features li::before{content:'✓';color:var(--green);font-weight:900;margin-right:7px}
+.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.summary-box{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:11px}.summary-box span{display:block;color:var(--muted);font-size:.61rem}.summary-box strong{display:block;font-size:.86rem;margin-top:4px}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:grid;gap:6px}.field label{font-size:.65rem;color:var(--muted);font-weight:800}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.form-grid .wide{grid-column:1/-1}.field textarea{min-height:84px;resize:vertical}.helper{font-size:.6rem;color:var(--muted);line-height:1.45}
+.empty{padding:28px;text-align:center;color:var(--muted);font-size:.72rem}.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.68);backdrop-filter:blur(5px);z-index:60;display:none;align-items:center;justify-content:center;padding:18px}.modal-backdrop.open{display:flex}.modal{width:min(650px,100%);max-height:88vh;overflow:auto;background:#101720;border:1px solid var(--border);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.55);padding:18px}.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}.modal-head h3{margin:0;font-size:1rem}.modal-head p{margin:4px 0 0;color:var(--muted);font-size:.65rem}.close{border:1px solid var(--border);background:var(--surface-2);color:var(--text);width:34px;height:34px;border-radius:10px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.detail{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:10px}.detail span{display:block;color:var(--muted);font-size:.59rem}.detail strong{display:block;font-size:.72rem;margin-top:3px;word-break:break-word}.toast{position:fixed;right:18px;bottom:18px;z-index:90;max-width:360px;background:#17212d;border:1px solid var(--border);color:var(--text);border-radius:13px;padding:11px 13px;box-shadow:var(--shadow);font-size:.7rem;opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateY(0)}.toast strong{color:var(--green)}
+.mobile-nav{display:none}
+@media(max-width:1050px){.metric-grid{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}.plan-grid{grid-template-columns:1fr 1fr}.settings-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.sidebar{display:none}.main{margin-left:0;padding:18px 14px 94px}.topbar{align-items:flex-start}.top-actions .pill{display:none}.hero{padding:16px}.hero-value{font-size:1.65rem}.metric-grid{gap:8px}.metric-card{min-height:98px}.metric-card .value{font-size:1.4rem}.plan-grid{grid-template-columns:1fr}.summary-strip{grid-template-columns:1fr 1fr}.form-grid,.detail-grid{grid-template-columns:1fr}.form-grid .wide{grid-column:auto}.mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(4,1fr);left:10px;right:10px;bottom:var(--safe-bottom);z-index:40;background:rgba(17,24,33,.96);backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:17px;padding:7px;box-shadow:0 18px 55px rgba(0,0,0,.45)}.mobile-nav button{border:0;background:transparent;color:var(--muted);border-radius:10px;padding:7px 3px;font-size:.55rem;font-weight:850;display:grid;gap:2px;place-items:center}.mobile-nav button span{font-size:1rem}.mobile-nav button.active{color:var(--green);background:rgba(37,226,138,.07)}.toolbar{align-items:stretch}.search{min-width:100%;flex-basis:100%}.select,.toolbar .btn{flex:1}.top-title h1{font-size:1.3rem}.notice{font-size:.68rem}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">DC</div><div><strong>DriveCash</strong><small>Painel Administrativo</small></div><span class="demo-badge">TESTE</span></div>
+    <nav class="nav">
+      <button class="nav-btn active" data-page="dashboard"><span class="ico">⌂</span>Dashboard</button>
+      <button class="nav-btn" data-page="clientes"><span class="ico">◎</span>Clientes</button>
+      <button class="nav-btn" data-page="assinaturas"><span class="ico">◈</span>Assinaturas</button>
+      <button class="nav-btn" data-page="pagamentos"><span class="ico">$</span>Pagamentos</button>
+      <button class="nav-btn" data-page="configuracoes"><span class="ico">⚙</span>Configurações</button>
+    </nav>
+    <div class="sidebar-foot"><strong>Modo seguro:</strong> nenhum dado real é lido ou gravado. Esta versão usa somente dados fictícios em memória.</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="top-title"><small>Administração</small><h1 id="pageTitle">Visão geral</h1></div>
+      <div class="top-actions"><span class="pill">● Ambiente de teste</span><button class="icon-btn" id="resetBtn" title="Restaurar dados demo">↻</button></div>
+    </div>
+    <div class="notice"><span>⚠</span><div><strong>Protótipo seguro.</strong> Todas as ativações, renovações, bloqueios e pagamentos desta tela são apenas simulações. Recarregar a página descarta as alterações. Firebase, Mercado Pago, WhatsApp e GitHub não são acessados.</div></div>
+
+    <section class="page active" id="page-dashboard">
+      <div class="hero"><div><span class="eyebrow">Receita recebida — demo</span><span class="hero-value" id="heroRevenue">R$ 0,00</span><span class="muted" style="font-size:.68rem">Pagamentos aprovados no mês atual</span></div><div class="hero-side"><small>Assinaturas ativas</small><strong id="heroActive">0 clientes</strong></div></div>
+      <div class="metric-grid">
+        <div class="metric-card"><div class="label">Clientes <span class="dot blue"></span></div><div class="value" id="mTotal">0</div><div class="sub">Total cadastrado</div></div>
+        <div class="metric-card"><div class="label">Em teste <span class="dot blue"></span></div><div class="value" id="mTrial">0</div><div class="sub">7 dias gratuitos</div></div>
+        <div class="metric-card"><div class="label">Ativos <span class="dot green"></span></div><div class="value" id="mActive">0</div><div class="sub">Mensal + anual</div></div>
+        <div class="metric-card"><div class="label">Atenção <span class="dot red"></span></div><div class="value" id="mAttention">0</div><div class="sub">Vencidos ou bloqueados</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-head"><div><h3>Atividade recente</h3><small>Últimos eventos simulados</small></div><button class="btn ghost" data-go="clientes">Ver clientes</button></div><div class="row-list" id="activityList"></div></div>
+        <div class="card"><div class="card-head"><div><h3>Distribuição</h3><small>Base atual de demonstração</small></div></div><div id="distribution"></div></div>
+      </div>
+    </section>
+
+    <section class="page" id="page-clientes">
+      <div class="toolbar">
+        <div class="search"><input id="clientSearch" placeholder="Buscar por nome, e-mail ou UID"></div>
+        <select class="select" id="statusFilter"><option value="todos">Todos os status</option><option value="ativo">Ativo</option><option value="teste">Teste</option><option value="vencido">Vencido</option><option value="pendente">Pendente</option><option value="bloqueado">Bloqueado</option></select>
+        <button class="btn primary" id="newClientBtn">+ Cliente demo</button>
+      </div>
+      <div class="summary-strip"><div class="summary-box"><span>Total</span><strong id="cTotal">0</strong></div><div class="summary-box"><span>Mensal</span><strong id="cMonthly">0</strong></div><div class="summary-box"><span>Anual</span><strong id="cAnnual">0</strong></div><div class="summary-box"><span>Sem assinatura</span><strong id="cNone">0</strong></div></div>
+      <div class="table-card"><div class="table-wrap"><table class="table"><thead><tr><th>Cliente</th><th>Status</th><th>Plano</th><th>Cadastro</th><th>Vencimento/Teste</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="clientsBody"></tbody></table></div></div>
+    </section>
+
+    <section class="page" id="page-assinaturas">
+      <div class="plan-grid">
+        <div class="plan-card"><span class="eyebrow">Entrada</span><h3>Teste grátis</h3><div class="plan-price">7 <small>dias</small></div><div class="plan-note">Sem plano gratuito permanente. Ao terminar, o acesso pago deve ser exigido sem apagar os dados do usuário.</div><ul class="features"><li>Acesso temporário</li><li>Sem cobrança</li><li>Conversão para mensal ou anual</li></ul></div>
+        <div class="plan-card"><span class="eyebrow">Flexível</span><h3>Mensal</h3><div class="plan-price">R$ 19,90 <small>/mês</small></div><div class="plan-note">Opção de menor compromisso. Renovação mensal no modelo futuro.</div><ul class="features"><li>30 dias de acesso</li><li>Ativação manual na fase atual</li><li>Pagamento via WhatsApp/Mercado Pago</li></ul></div>
+        <div class="plan-card featured"><span class="plan-badge">MELHOR ESCOLHA</span><span class="eyebrow">Economia</span><h3>Anual</h3><div class="strike">De R$ 238,80</div><div class="plan-price">R$ 179,00 <small>/ano</small></div><div class="save">25% de economia • R$ 14,92/mês</div><ul class="features"><li>12 meses de acesso</li><li>Economia de R$ 59,80</li><li>Quase 3 meses grátis</li></ul></div>
+      </div>
+      <div class="card"><div class="card-head"><div><h3>Assinaturas cadastradas</h3><small>Geradas a partir dos clientes demo</small></div><button class="btn" data-go="clientes">Gerenciar clientes</button></div><div id="subscriptionsList" class="row-list"></div></div>
+    </section>
+
+    <section class="page" id="page-pagamentos">
+      <div class="summary-strip"><div class="summary-box"><span>Recebido</span><strong id="pReceived">R$ 0,00</strong></div><div class="summary-box"><span>Pendente</span><strong id="pPending">R$ 0,00</strong></div><div class="summary-box"><span>Transações</span><strong id="pCount">0</strong></div><div class="summary-box"><span>Ticket médio</span><strong id="pAverage">R$ 0,00</strong></div></div>
+      <div class="toolbar"><div class="search"><input id="paymentSearch" placeholder="Buscar cliente ou ID de pagamento"></div><select class="select" id="paymentFilter"><option value="todos">Todos</option><option value="aprovado">Aprovado</option><option value="pendente">Pendente</option></select><button class="btn primary" id="newPaymentBtn">+ Pagamento demo</button></div>
+      <div class="table-card"><div class="table-wrap"><table class="table"><thead><tr><th>ID</th><th>Cliente</th><th>Plano</th><th>Valor</th><th>Método</th><th>Data</th><th>Status</th></tr></thead><tbody id="paymentsBody"></tbody></table></div></div>
+    </section>
+
+    <section class="page" id="page-configuracoes">
+      <div class="settings-grid">
+        <div class="card"><div class="card-head"><div><h3>Configuração comercial</h3><small>Somente memória nesta versão</small></div></div><div class="form-grid"><div class="field"><label>Teste grátis (dias)</label><input type="number" id="cfgTrial" value="7"></div><div class="field"><label>Mensal (R$)</label><input type="number" step="0.01" id="cfgMonthly" value="19.90"></div><div class="field"><label>Anual (R$)</label><input type="number" step="0.01" id="cfgAnnual" value="179.00"></div><div class="field"><label>WhatsApp de atendimento</label><input id="cfgWhatsapp" value="47 99203-0653"></div><div class="wide"><button class="btn primary" id="saveConfigBtn">Salvar apenas nesta sessão</button></div></div></div>
+        <div class="card"><div class="card-head"><div><h3>Arquitetura futura</h3><small>Etapas planejadas</small></div></div><div class="progress-block"><div class="progress-label"><span>1. Painel administrativo</span><strong>Em construção</strong></div><div class="bar"><span style="width:35%"></span></div></div><div class="progress-block"><div class="progress-label"><span>2. Backend seguro</span><strong>Futuro</strong></div><div class="bar gold"><span style="width:5%"></span></div></div><div class="progress-block"><div class="progress-label"><span>3. Mercado Pago + Webhook</span><strong>Futuro</strong></div><div class="bar blue"><span style="width:5%"></span></div></div><div class="progress-block"><div class="progress-label"><span>4. WhatsApp automático</span><strong>Futuro</strong></div><div class="bar gold"><span style="width:5%"></span></div></div><p class="helper">Nenhuma credencial privada deve ficar no HTML público. Na fase automática, tokens de pagamento, webhook, WhatsApp e permissões administrativas deverão ficar no backend.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="mobile-nav">
+    <button class="active" data-page="dashboard"><span>⌂</span>Início</button>
+    <button data-page="clientes"><span>◎</span>Clientes</button>
+    <button data-page="assinaturas"><span>◈</span>Planos</button>
+    <button data-page="pagamentos"><span>$</span>Pagamentos</button>
+  </nav>
+</div>
+
+<div class="modal-backdrop" id="clientModal"><div class="modal"><div class="modal-head"><div><h3 id="clientModalTitle">Cliente</h3><p>Dados demonstrativos — nada será gravado fora desta página.</p></div><button class="close" data-close="clientModal">×</button></div><div id="clientModalBody"></div></div></div>
+<div class="modal-backdrop" id="formModal"><div class="modal"><div class="modal-head"><div><h3 id="formModalTitle">Novo cliente demo</h3><p>Será criado somente em memória.</p></div><button class="close" data-close="formModal">×</button></div><div id="formModalBody"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const fmtBRL=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v||0));
+const fmtDate=s=>{if(!s)return'—';const d=new Date(s+'T12:00:00');return new Intl.DateTimeFormat('pt-BR').format(d)};
+const today='2026-08-26';
+const initialState={
+  config:{trialDays:7,monthly:19.90,annual:179.00,whatsapp:'47 99203-0653'},
+  clients:[
+    {id:'USR-1001',name:'Carlos Mendes',email:'carlos@exemplo.com',status:'ativo',plan:'anual',created:'2026-08-02',until:'2027-08-05',value:179,phone:'(47) 98888-1101'},
+    {id:'USR-1002',name:'Rafael Souza',email:'rafael@exemplo.com',status:'ativo',plan:'mensal',created:'2026-08-10',until:'2026-09-10',value:19.90,phone:'(47) 98888-1102'},
+    {id:'USR-1003',name:'Ana Martins',email:'ana@exemplo.com',status:'teste',plan:'nenhum',created:'2026-08-23',until:'2026-08-30',value:0,phone:'(47) 98888-1103'},
+    {id:'USR-1004',name:'João Lima',email:'joao@exemplo.com',status:'vencido',plan:'mensal',created:'2026-07-01',until:'2026-08-01',value:19.90,phone:'(47) 98888-1104'},
+    {id:'USR-1005',name:'Marcos Silva',email:'marcos@exemplo.com',status:'ativo',plan:'anual',created:'2026-07-18',until:'2027-07-18',value:179,phone:'(47) 98888-1105'},
+    {id:'USR-1006',name:'Bruna Alves',email:'bruna@exemplo.com',status:'pendente',plan:'anual',created:'2026-08-25',until:'',value:179,phone:'(47) 98888-1106'},
+    {id:'USR-1007',name:'Pedro Rocha',email:'pedro@exemplo.com',status:'teste',plan:'nenhum',created:'2026-08-24',until:'2026-08-31',value:0,phone:'(47) 98888-1107'},
+    {id:'USR-1008',name:'Felipe Costa',email:'felipe@exemplo.com',status:'bloqueado',plan:'mensal',created:'2026-06-15',until:'2026-08-15',value:19.90,phone:'(47) 98888-1108'}
+  ],
+  payments:[
+    {id:'MP-DEMO-9011',clientId:'USR-1001',plan:'anual',value:179,method:'Pix',date:'2026-08-05',status:'aprovado'},
+    {id:'MP-DEMO-9012',clientId:'USR-1002',plan:'mensal',value:19.90,method:'Pix',date:'2026-08-10',status:'aprovado'},
+    {id:'MP-DEMO-9013',clientId:'USR-1005',plan:'anual',value:179,method:'Link',date:'2026-07-18',status:'aprovado'},
+    {id:'MP-DEMO-9014',clientId:'USR-1006',plan:'anual',value:179,method:'Pix',date:'2026-08-25',status:'pendente'}
+  ],
+  activity:[
+    {type:'Pagamento aprovado',clientId:'USR-1002',date:'Hoje, 03:42',amount:19.90,tone:'green'},
+    {type:'Novo teste iniciado',clientId:'USR-1007',date:'Ontem, 19:18',amount:0,tone:'blue'},
+    {type:'Pagamento pendente',clientId:'USR-1006',date:'Ontem, 17:04',amount:179,tone:'gold'},
+    {type:'Assinatura anual ativa',clientId:'USR-1001',date:'05/08/2026',amount:179,tone:'green'}
+  ]
+};
+let state=structuredClone(initialState);
+const $=s=>document.querySelector(s);const $$=s=>[...document.querySelectorAll(s)];
+function client(id){return state.clients.find(c=>c.id===id)}
+function toast(msg){const el=$('#toast');el.innerHTML=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2600)}
+function statusLabel(s){return({ativo:'ATIVO',teste:'TESTE',vencido:'VENCIDO',pendente:'PENDENTE',bloqueado:'BLOQUEADO'})[s]||s.toUpperCase()}
+function planLabel(p){return({anual:'Anual',mensal:'Mensal',nenhum:'—'})[p]||p}
+function initials(name){return name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase()}
+function daysBetween(a,b){return Math.ceil((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000)}
+function renderAll(){renderDashboard();renderClients();renderSubscriptions();renderPayments()}
+function renderDashboard(){
+  const active=state.clients.filter(c=>c.status==='ativo');const trial=state.clients.filter(c=>c.status==='teste');const attention=state.clients.filter(c=>['vencido','bloqueado'].includes(c.status));
+  const month='2026-08';const received=state.payments.filter(p=>p.status==='aprovado'&&p.date.startsWith(month)).reduce((a,p)=>a+p.value,0);
+  $('#heroRevenue').textContent=fmtBRL(received);$('#heroActive').textContent=`${active.length} cliente${active.length===1?'':'s'}`;$('#mTotal').textContent=state.clients.length;$('#mTrial').textContent=trial.length;$('#mActive').textContent=active.length;$('#mAttention').textContent=attention.length;
+  $('#activityList').innerHTML=state.activity.map(a=>{const c=client(a.clientId);return `<div class="activity"><div class="avatar">${c?initials(c.name):'DC'}</div><div><strong>${a.type}</strong><small>${c?c.name:'Cliente'} • ${a.date}</small></div><span class="money ${a.tone||''}">${a.amount?fmtBRL(a.amount):'—'}</span></div>`}).join('');
+  const total=Math.max(state.clients.length,1);const sets=[['Ativos','ativo','green'],['Em teste','teste','blue'],['Pendentes','pendente','gold'],['Vencidos/Bloqueados','attention','red']];
+  const values={ativo:active.length,teste:trial.length,pendente:state.clients.filter(c=>c.status==='pendente').length,attention:attention.length};
+  $('#distribution').innerHTML=sets.map(([label,key,tone])=>`<div class="progress-block"><div class="progress-label"><span>${label}</span><strong>${values[key]}</strong></div><div class="bar ${tone==='gold'?'gold':tone==='blue'?'blue':''}"><span style="width:${Math.round(values[key]/total*100)}%;${tone==='red'?'background:var(--red)':''}"></span></div></div>`).join('');
+}
+function renderClients(){
+  const q=$('#clientSearch').value.trim().toLowerCase(),f=$('#statusFilter').value;
+  const rows=state.clients.filter(c=>(!q||[c.name,c.email,c.id].some(v=>v.toLowerCase().includes(q)))&&(f==='todos'||c.status===f));
+  $('#clientsBody').innerHTML=rows.length?rows.map(c=>`<tr><td><div class="client-cell"><div class="avatar">${initials(c.name)}</div><div><strong>${c.name}</strong><small>${c.email}<br>${c.id}</small></div></div></td><td><span class="status ${c.status}">● ${statusLabel(c.status)}</span></td><td>${planLabel(c.plan)}</td><td>${fmtDate(c.created)}</td><td>${fmtDate(c.until)}</td><td>${c.value?fmtBRL(c.value):'—'}</td><td><div class="mini-actions"><button class="mini-btn" data-client="${c.id}">Abrir</button></div></td></tr>`).join(''):`<tr><td colspan="7"><div class="empty">Nenhum cliente encontrado.</div></td></tr>`;
+  $('#cTotal').textContent=state.clients.length;$('#cMonthly').textContent=state.clients.filter(c=>c.plan==='mensal').length;$('#cAnnual').textContent=state.clients.filter(c=>c.plan==='anual').length;$('#cNone').textContent=state.clients.filter(c=>c.plan==='nenhum').length;
+  $$('[data-client]').forEach(b=>b.onclick=()=>openClient(b.dataset.client));
+}
+function renderSubscriptions(){
+  const list=state.clients.filter(c=>c.plan!=='nenhum'||c.status==='teste');
+  $('#subscriptionsList').innerHTML=list.map(c=>`<div class="activity"><div class="avatar">${initials(c.name)}</div><div><strong>${c.name} — ${c.status==='teste'?'Teste grátis':planLabel(c.plan)}</strong><small>${c.status==='teste'?`Teste até ${fmtDate(c.until)}`:`${statusLabel(c.status)} • vencimento ${fmtDate(c.until)}`}</small></div><span class="status ${c.status}">${statusLabel(c.status)}</span></div>`).join('');
+}
+function renderPayments(){
+  const q=$('#paymentSearch').value.trim().toLowerCase(),f=$('#paymentFilter').value;
+  const rows=state.payments.filter(p=>{const c=client(p.clientId);return(!q||p.id.toLowerCase().includes(q)||(c&&[c.name,c.email].some(v=>v.toLowerCase().includes(q))))&&(f==='todos'||p.status===f)});
+  $('#paymentsBody').innerHTML=rows.length?rows.map(p=>{const c=client(p.clientId);return `<tr><td>${p.id}</td><td>${c?c.name:p.clientId}</td><td>${planLabel(p.plan)}</td><td><strong>${fmtBRL(p.value)}</strong></td><td>${p.method}</td><td>${fmtDate(p.date)}</td><td><span class="status ${p.status==='aprovado'?'ativo':'pendente'}">● ${p.status.toUpperCase()}</span></td></tr>`}).join(''):`<tr><td colspan="7"><div class="empty">Nenhum pagamento encontrado.</div></td></tr>`;
+  const approved=state.payments.filter(p=>p.status==='aprovado'),pending=state.payments.filter(p=>p.status==='pendente');const received=approved.reduce((a,p)=>a+p.value,0),pend=pending.reduce((a,p)=>a+p.value,0);
+  $('#pReceived').textContent=fmtBRL(received);$('#pPending').textContent=fmtBRL(pend);$('#pCount').textContent=state.payments.length;$('#pAverage').textContent=approved.length?fmtBRL(received/approved.length):fmtBRL(0);
+}
+function openClient(id){
+  const c=client(id);if(!c)return;$('#clientModalTitle').textContent=c.name;
+  const remaining=c.until?daysBetween(today,c.until):null;
+  $('#clientModalBody').innerHTML=`<div class="detail-grid"><div class="detail"><span>E-mail</span><strong>${c.email}</strong></div><div class="detail"><span>UID</span><strong>${c.id}</strong></div><div class="detail"><span>Status</span><strong>${statusLabel(c.status)}</strong></div><div class="detail"><span>Plano</span><strong>${planLabel(c.plan)}</strong></div><div class="detail"><span>Cadastro</span><strong>${fmtDate(c.created)}</strong></div><div class="detail"><span>Vencimento/Teste</span><strong>${fmtDate(c.until)}${remaining!==null?` (${remaining>=0?remaining+' dias':'vencido'})`:''}</strong></div></div><div class="modal-actions"><button class="btn" data-action="trial">Iniciar teste 7 dias</button><button class="btn" data-action="monthly">Ativar mensal</button><button class="btn gold" data-action="annual">Ativar anual</button><button class="btn danger" data-action="block">${c.status==='bloqueado'?'Desbloquear':'Bloquear'}</button></div><p class="helper" style="margin-top:11px">Todas as ações acima alteram somente os dados demonstrativos desta sessão.</p>`;
+  $$('#clientModalBody [data-action]').forEach(b=>b.onclick=()=>applyClientAction(id,b.dataset.action));$('#clientModal').classList.add('open');
+}
+function plusDays(date,days){const d=new Date(date+'T12:00:00');d.setDate(d.getDate()+days);return d.toISOString().slice(0,10)}
+function plusMonths(date,months){const d=new Date(date+'T12:00:00');d.setMonth(d.getMonth()+months);return d.toISOString().slice(0,10)}
+function applyClientAction(id,action){
+  const c=client(id);if(!c)return;
+  if(action==='trial'){c.status='teste';c.plan='nenhum';c.value=0;c.until=plusDays(today,state.config.trialDays);state.activity.unshift({type:'Teste reiniciado (demo)',clientId:id,date:'Agora',amount:0,tone:'blue'});toast('<strong>Demo:</strong> teste de 7 dias aplicado.');}
+  if(action==='monthly'){c.status='ativo';c.plan='mensal';c.value=state.config.monthly;c.until=plusMonths(today,1);state.activity.unshift({type:'Plano mensal ativado (demo)',clientId:id,date:'Agora',amount:c.value,tone:'green'});toast('<strong>Demo:</strong> plano mensal ativado.');}
+  if(action==='annual'){c.status='ativo';c.plan='anual';c.value=state.config.annual;c.until=plusMonths(today,12);state.activity.unshift({type:'Plano anual ativado (demo)',clientId:id,date:'Agora',amount:c.value,tone:'green'});toast('<strong>Demo:</strong> plano anual ativado.');}
+  if(action==='block'){c.status=c.status==='bloqueado'?'vencido':'bloqueado';state.activity.unshift({type:c.status==='bloqueado'?'Cliente bloqueado (demo)':'Cliente desbloqueado (demo)',clientId:id,date:'Agora',amount:0,tone:c.status==='bloqueado'?'gold':'blue'});toast(`<strong>Demo:</strong> cliente ${c.status==='bloqueado'?'bloqueado':'desbloqueado'}.`);}
+  renderAll();openClient(id);
+}
+function openNewClient(){
+  $('#formModalTitle').textContent='Novo cliente demo';
+  $('#formModalBody').innerHTML=`<div class="form-grid"><div class="field"><label>Nome</label><input id="fName" placeholder="Nome do cliente"></div><div class="field"><label>E-mail</label><input id="fEmail" type="email" placeholder="cliente@email.com"></div><div class="field"><label>Telefone</label><input id="fPhone" placeholder="(47) 99999-9999"></div><div class="field"><label>Status inicial</label><select id="fStatus"><option value="teste">Teste grátis</option><option value="pendente">Pendente</option></select></div></div><div class="modal-actions"><button class="btn ghost" data-close="formModal">Cancelar</button><button class="btn primary" id="createClientConfirm">Criar cliente demo</button></div>`;
+  $('#formModal').classList.add('open');$('#createClientConfirm').onclick=()=>{const name=$('#fName').value.trim(),email=$('#fEmail').value.trim();if(!name||!email){toast('Preencha nome e e-mail.');return}const id='USR-'+String(Math.floor(1100+Math.random()*8800));const status=$('#fStatus').value;state.clients.unshift({id,name,email,phone:$('#fPhone').value.trim(),status,plan:'nenhum',created:today,until:status==='teste'?plusDays(today,state.config.trialDays):'',value:0});state.activity.unshift({type:'Novo cliente criado (demo)',clientId:id,date:'Agora',amount:0,tone:'blue'});$('#formModal').classList.remove('open');renderAll();toast('<strong>Demo:</strong> cliente criado somente em memória.')};bindClose();
+}
+function openNewPayment(){
+  const opts=state.clients.map(c=>`<option value="${c.id}">${c.name} — ${c.email}</option>`).join('');$('#formModalTitle').textContent='Novo pagamento demo';$('#formModalBody').innerHTML=`<div class="form-grid"><div class="field wide"><label>Cliente</label><select id="payClient">${opts}</select></div><div class="field"><label>Plano</label><select id="payPlan"><option value="mensal">Mensal</option><option value="anual">Anual</option></select></div><div class="field"><label>Status</label><select id="payStatus"><option value="aprovado">Aprovado</option><option value="pendente">Pendente</option></select></div><div class="field"><label>Método</label><select id="payMethod"><option>Pix</option><option>Link</option><option>Cartão</option></select></div><div class="field"><label>Valor (R$)</label><input id="payValue" type="number" step="0.01" value="19.90"></div></div><div class="modal-actions"><button class="btn ghost" data-close="formModal">Cancelar</button><button class="btn primary" id="createPaymentConfirm">Registrar demo</button></div>`;$('#formModal').classList.add('open');$('#payPlan').onchange=e=>$('#payValue').value=e.target.value==='anual'?state.config.annual.toFixed(2):state.config.monthly.toFixed(2);$('#createPaymentConfirm').onclick=()=>{const cid=$('#payClient').value,p=$('#payPlan').value,val=Number($('#payValue').value),st=$('#payStatus').value,id='MP-DEMO-'+Math.floor(10000+Math.random()*89999);state.payments.unshift({id,clientId:cid,plan:p,value:val,method:$('#payMethod').value,date:today,status:st});state.activity.unshift({type:`Pagamento ${st} (demo)`,clientId:cid,date:'Agora',amount:val,tone:st==='aprovado'?'green':'gold'});$('#formModal').classList.remove('open');renderAll();toast('<strong>Demo:</strong> pagamento registrado em memória.')};bindClose();
+}
+function bindClose(){$$('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.remove('open'))}
+function go(page){$$('.page').forEach(p=>p.classList.toggle('active',p.id===`page-${page}`));$$('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('#pageTitle').textContent=({dashboard:'Visão geral',clientes:'Clientes',assinaturas:'Assinaturas',pagamentos:'Pagamentos',configuracoes:'Configurações'})[page]||'DriveCash Admin';window.scrollTo({top:0,behavior:'smooth'})}
+$$('[data-page]').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+$('#clientSearch').oninput=renderClients;$('#statusFilter').onchange=renderClients;$('#paymentSearch').oninput=renderPayments;$('#paymentFilter').onchange=renderPayments;$('#newClientBtn').onclick=openNewClient;$('#newPaymentBtn').onclick=openNewPayment;
+$('#resetBtn').onclick=()=>{state=structuredClone(initialState);$('#cfgTrial').value=state.config.trialDays;$('#cfgMonthly').value=state.config.monthly;$('#cfgAnnual').value=state.config.annual;$('#cfgWhatsapp').value=state.config.whatsapp;renderAll();toast('<strong>Demo restaurada.</strong> Dados voltaram ao estado inicial.')};
+$('#saveConfigBtn').onclick=()=>{state.config.trialDays=Math.max(1,Number($('#cfgTrial').value)||7);state.config.monthly=Math.max(0,Number($('#cfgMonthly').value)||19.90);state.config.annual=Math.max(0,Number($('#cfgAnnual').value)||179);state.config.whatsapp=$('#cfgWhatsapp').value.trim();renderAll();toast('<strong>Configuração salva</strong> somente nesta sessão.')};
+$('#clientModal').onclick=e=>{if(e.target===$('#clientModal'))$('#clientModal').classList.remove('open')};$('#formModal').onclick=e=>{if(e.target===$('#formModal'))$('#formModal').classList.remove('open')};bindClose();renderAll();
+</script>
+</body>
+</html>
